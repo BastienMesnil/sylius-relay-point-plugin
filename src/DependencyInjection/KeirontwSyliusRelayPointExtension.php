@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BastienMesnil\SyliusRelayPointPlugin\DependencyInjection;
+namespace Keirontw\SyliusRelayPointPlugin\DependencyInjection;
 
 use Sylius\Bundle\CoreBundle\DependencyInjection\PrependDoctrineMigrationsTrait;
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Extension\AbstractResourceExtension;
@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
-final class BastienMesnilSyliusRelayPointExtension extends AbstractResourceExtension implements PrependExtensionInterface
+final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension implements PrependExtensionInterface
 {
     use PrependDoctrineMigrationsTrait;
 
@@ -19,10 +19,10 @@ final class BastienMesnilSyliusRelayPointExtension extends AbstractResourceExten
     {
         $config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
 
-        $container->setParameter('bastien_mesnil_sylius_relay_point.nominatim.url', $config['nominatim']['url']);
-        $container->setParameter('bastien_mesnil_sylius_relay_point.nominatim.secret', $config['nominatim']['secret']);
-        $container->setParameter('bastien_mesnil_sylius_relay_point.nominatim.user_agent', $config['nominatim']['user_agent']);
-        $container->setParameter('bastien_mesnil_sylius_relay_point.nominatim.contact_email', $config['nominatim']['contact_email']);
+        $container->setParameter('keirontw_sylius_relay_point.nominatim.url', $config['nominatim']['url']);
+        $container->setParameter('keirontw_sylius_relay_point.nominatim.secret', $config['nominatim']['secret']);
+        $container->setParameter('keirontw_sylius_relay_point.nominatim.user_agent', $config['nominatim']['user_agent']);
+        $container->setParameter('keirontw_sylius_relay_point.nominatim.contact_email', $config['nominatim']['contact_email']);
 
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
 
@@ -41,7 +41,7 @@ final class BastienMesnilSyliusRelayPointExtension extends AbstractResourceExten
 
     protected function getMigrationsDirectory(): string
     {
-        return '@BastienMesnilSyliusRelayPointPlugin/src/Migrations';
+        return '@KeirontwSyliusRelayPointPlugin/src/Migrations';
     }
 
     protected function getNamespacesOfMigrationsExecutedBefore(): array

@@ -1,5 +1,5 @@
 <?php
 
 return [
-    BastienMesnil\SyliusRelayPointPlugin\BastienMesnilSyliusRelayPointPlugin::class => ['all' => true],
+    Keirontw\SyliusRelayPointPlugin\KeirontwSyliusRelayPointPlugin::class => ['all' => true],
 ];

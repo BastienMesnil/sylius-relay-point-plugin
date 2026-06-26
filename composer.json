@@ -1,5 +1,5 @@
 {
-    "name": "bastienmesnil/sylius-relay-point-plugin",
+    "name": "keirontw/sylius-relay-point-plugin",
     "type": "sylius-plugin",
     "description": "Carrier-agnostic relay point selection plugin for Sylius checkout",
     "keywords": [
@@ -64,12 +64,12 @@
     },
     "autoload": {
         "psr-4": {
-            "BastienMesnil\\SyliusRelayPointPlugin\\": "src/"
+            "Keirontw\\SyliusRelayPointPlugin\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\BastienMesnil\\SyliusRelayPointPlugin\\": [
+            "Tests\\Keirontw\\SyliusRelayPointPlugin\\": [
                 "tests/",
                 "tests/TestApplication/src/"
             ]

@@ -6,18 +6,18 @@
         xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
 >
     <services>
-        <instanceof id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointProviderInterface" autoconfigure="true">
-            <tag name="bastien_mesnil_sylius_relay_point.relay_point_provider" />
+        <instanceof id="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointProviderInterface" autoconfigure="true">
+            <tag name="keirontw_sylius_relay_point.relay_point_provider" />
         </instanceof>
 
-        <service id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistry">
-            <argument type="tagged_iterator" tag="bastien_mesnil_sylius_relay_point.relay_point_provider" />
+        <service id="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistry">
+            <argument type="tagged_iterator" tag="keirontw_sylius_relay_point.relay_point_provider" />
         </service>
-        <service id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistryInterface" alias="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistry" />
+        <service id="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistryInterface" alias="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistry" />
 
-        <service id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchService" public="true">
-            <argument type="service" id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistryInterface" />
+        <service id="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchService" public="true">
+            <argument type="service" id="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistryInterface" />
         </service>
-        <service id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchServiceInterface" alias="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchService" public="true" />
+        <service id="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchServiceInterface" alias="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchService" public="true" />
     </services>
 </container>

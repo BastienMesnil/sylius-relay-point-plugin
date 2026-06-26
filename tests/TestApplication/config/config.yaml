@@ -1,5 +1,5 @@
 imports:
-    - { resource: "@BastienMesnilSyliusRelayPointPlugin/config/config.yaml" }
+    - { resource: "@KeirontwSyliusRelayPointPlugin/config/config.yaml" }
     - { resource: "services_test.php" }
 
 twig:
@@ -16,4 +16,4 @@ doctrine:
                         is_bundle: false
                         type: attribute
                         dir: '%kernel.project_dir%/../../../tests/TestApplication/src/Entity'
-                        prefix: Tests\BastienMesnil\SyliusRelayPointPlugin
+                        prefix: Tests\Keirontw\SyliusRelayPointPlugin

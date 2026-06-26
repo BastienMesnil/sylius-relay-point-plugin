@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace BastienMesnil\SyliusRelayPointPlugin\Geocoding;
+namespace Keirontw\SyliusRelayPointPlugin\Geocoding;
 
-use BastienMesnil\SyliusRelayPointPlugin\Geocoding\Model\GeocodingResult;
+use Keirontw\SyliusRelayPointPlugin\Geocoding\Model\GeocodingResult;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;

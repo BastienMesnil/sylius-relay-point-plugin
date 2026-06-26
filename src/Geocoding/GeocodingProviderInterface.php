@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace BastienMesnil\SyliusRelayPointPlugin\Geocoding;
+namespace Keirontw\SyliusRelayPointPlugin\Geocoding;
 
-use BastienMesnil\SyliusRelayPointPlugin\Geocoding\Model\GeocodingResult;
+use Keirontw\SyliusRelayPointPlugin\Geocoding\Model\GeocodingResult;
 
 /**
  * Implement this interface to plug a geocoding backend (a self-hosted

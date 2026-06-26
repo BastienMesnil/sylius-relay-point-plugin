@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BastienMesnil\SyliusRelayPointPlugin\Geocoding\Model;
+namespace Keirontw\SyliusRelayPointPlugin\Geocoding\Model;
 
 final class GeocodingResult
 {

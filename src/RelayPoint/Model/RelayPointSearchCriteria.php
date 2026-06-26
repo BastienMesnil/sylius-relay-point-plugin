@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BastienMesnil\SyliusRelayPointPlugin\RelayPoint\Model;
+namespace Keirontw\SyliusRelayPointPlugin\RelayPoint\Model;
 
 final class RelayPointSearchCriteria
 {

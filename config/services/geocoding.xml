@@ -6,13 +6,13 @@
         xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
 >
     <services>
-        <service id="BastienMesnil\SyliusRelayPointPlugin\Geocoding\NominatimProvider">
+        <service id="Keirontw\SyliusRelayPointPlugin\Geocoding\NominatimProvider">
             <argument type="service" id="http_client" />
             <argument type="service" id="logger" />
-            <argument>%bastien_mesnil_sylius_relay_point.nominatim.url%</argument>
-            <argument>%bastien_mesnil_sylius_relay_point.nominatim.secret%</argument>
-            <argument>%bastien_mesnil_sylius_relay_point.nominatim.user_agent%</argument>
-            <argument>%bastien_mesnil_sylius_relay_point.nominatim.contact_email%</argument>
+            <argument>%keirontw_sylius_relay_point.nominatim.url%</argument>
+            <argument>%keirontw_sylius_relay_point.nominatim.secret%</argument>
+            <argument>%keirontw_sylius_relay_point.nominatim.user_agent%</argument>
+            <argument>%keirontw_sylius_relay_point.nominatim.contact_email%</argument>
         </service>
 
         <!--
@@ -20,6 +20,6 @@
             plug in a different GeocodingProviderInterface implementation,
             e.g. Photon or a paid geocoding API.
         -->
-        <service id="BastienMesnil\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface" alias="BastienMesnil\SyliusRelayPointPlugin\Geocoding\NominatimProvider" public="true" />
+        <service id="Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface" alias="Keirontw\SyliusRelayPointPlugin\Geocoding\NominatimProvider" public="true" />
     </services>
 </container>

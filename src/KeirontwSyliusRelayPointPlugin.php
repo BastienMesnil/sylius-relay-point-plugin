@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace BastienMesnil\SyliusRelayPointPlugin;
+namespace Keirontw\SyliusRelayPointPlugin;
 
 use Sylius\Bundle\CoreBundle\Application\SyliusPluginTrait;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-final class BastienMesnilSyliusRelayPointPlugin extends Bundle
+final class KeirontwSyliusRelayPointPlugin extends Bundle
 {
     use SyliusPluginTrait;
 

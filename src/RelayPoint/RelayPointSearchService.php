@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace BastienMesnil\SyliusRelayPointPlugin\RelayPoint;
+namespace Keirontw\SyliusRelayPointPlugin\RelayPoint;
 
-use BastienMesnil\SyliusRelayPointPlugin\RelayPoint\Model\RelayPoint;
-use BastienMesnil\SyliusRelayPointPlugin\RelayPoint\Model\RelayPointSearchCriteria;
+use Keirontw\SyliusRelayPointPlugin\RelayPoint\Model\RelayPoint;
+use Keirontw\SyliusRelayPointPlugin\RelayPoint\Model\RelayPointSearchCriteria;
 
 final class RelayPointSearchService implements RelayPointSearchServiceInterface
 {

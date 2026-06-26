@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BastienMesnil\SyliusRelayPointPlugin\RelayPoint;
+namespace Keirontw\SyliusRelayPointPlugin\RelayPoint;
 
 final class RelayPointRegistry implements RelayPointRegistryInterface
 {
