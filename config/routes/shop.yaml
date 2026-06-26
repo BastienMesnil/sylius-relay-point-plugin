@@ -1,0 +1,13 @@
+# Delete these routes and define your own shop routes here
+
+bastien_mesnil_sylius_relay_point_static_welcome:
+    path: /static-welcome/{name}
+    defaults:
+        _controller: BastienMesnil\SyliusRelayPointPlugin\Controller\GreetingController::staticallyGreetAction
+        name: ~
+
+bastien_mesnil_sylius_relay_point_dynamic_welcome:
+    path: /dynamic-welcome/{name}
+    defaults:
+        _controller: BastienMesnil\SyliusRelayPointPlugin\Controller\GreetingController::dynamicallyGreetAction
+        name: ~

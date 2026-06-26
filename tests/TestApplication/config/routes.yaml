@@ -1,0 +1,5 @@
+bastien_mesnil_sylius_relay_point_admin:
+    resource: "@BastienMesnilSyliusRelayPointPlugin/config/routes/admin.yaml"
+
+bastien_mesnil_sylius_relay_point_shop:
+    resource: "@BastienMesnilSyliusRelayPointPlugin/config/routes/shop.yaml"
