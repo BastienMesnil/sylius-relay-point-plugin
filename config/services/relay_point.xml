@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<container
+        xmlns="http://symfony.com/schema/dic/services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
+>
+    <services>
+        <instanceof id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointProviderInterface" autoconfigure="true">
+            <tag name="bastien_mesnil_sylius_relay_point.relay_point_provider" />
+        </instanceof>
+
+        <service id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistry">
+            <argument type="tagged_iterator" tag="bastien_mesnil_sylius_relay_point.relay_point_provider" />
+        </service>
+        <service id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistryInterface" alias="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistry" />
+
+        <service id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchService" public="true">
+            <argument type="service" id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointRegistryInterface" />
+        </service>
+        <service id="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchServiceInterface" alias="BastienMesnil\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchService" public="true" />
+    </services>
+</container>

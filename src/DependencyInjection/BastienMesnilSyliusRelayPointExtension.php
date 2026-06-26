@@ -15,9 +15,15 @@ final class BastienMesnilSyliusRelayPointExtension extends AbstractResourceExten
 {
     use PrependDoctrineMigrationsTrait;
 
-    /** @psalm-suppress UnusedVariable */
     public function load(array $configs, ContainerBuilder $container): void
     {
+        $config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
+
+        $container->setParameter('bastien_mesnil_sylius_relay_point.nominatim.url', $config['nominatim']['url']);
+        $container->setParameter('bastien_mesnil_sylius_relay_point.nominatim.secret', $config['nominatim']['secret']);
+        $container->setParameter('bastien_mesnil_sylius_relay_point.nominatim.user_agent', $config['nominatim']['user_agent']);
+        $container->setParameter('bastien_mesnil_sylius_relay_point.nominatim.contact_email', $config['nominatim']['contact_email']);
+
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
 
         $loader->load('services.xml');
