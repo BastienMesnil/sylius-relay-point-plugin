@@ -4,13 +4,5 @@
     <services>
         <defaults public="true" />
         <!-- Put your Behat services here -->
-
-        <service id="bastien_mesnil_sylius_relay_point.context.ui.shop.welcome" class="Tests\BastienMesnil\SyliusRelayPointPlugin\Behat\Context\Ui\Shop\WelcomeContext">
-            <argument type="service" id="bastien_mesnil_sylius_relay_point.page.shop.static_welcome" />
-            <argument type="service" id="bastien_mesnil_sylius_relay_point.page.shop.dynamic_welcome" />
-        </service>
-
-        <service id="bastien_mesnil_sylius_relay_point.page.shop.static_welcome" class="Tests\BastienMesnil\SyliusRelayPointPlugin\Behat\Page\Shop\StaticWelcomePage" parent="sylius.behat.symfony_page" public="false" />
-        <service id="bastien_mesnil_sylius_relay_point.page.shop.dynamic_welcome" class="Tests\BastienMesnil\SyliusRelayPointPlugin\Behat\Page\Shop\DynamicWelcomePage" parent="sylius.behat.symfony_page" public="false" />
     </services>
 </container>

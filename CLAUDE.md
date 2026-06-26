@@ -84,8 +84,8 @@ composer run test-app-init
 This is a **Sylius Plugin Skeleton** - a template for creating Sylius e-commerce plugins. It provides a complete development environment with both traditional and Docker setups.
 
 ### Core Structure
-- **Main Plugin Class**: `src/AcmeSyliusExamplePlugin.php` - Entry point using `SyliusPluginTrait`
-- **DI Extension**: `src/DependencyInjection/AcmeSyliusExampleExtension.php` - Handles service loading and Doctrine migrations
+- **Main Plugin Class**: `src/BastienMesnilSyliusRelayPointPlugin.php` - Entry point using `SyliusPluginTrait`
+- **DI Extension**: `src/DependencyInjection/BastienMesnilSyliusRelayPointExtension.php` - Handles service loading and Doctrine migrations
 - **Services**: `config/services.xml` - Service definitions with XML configuration
 - **Routes**: `config/routes/` - Separate admin and shop route definitions
 - **Templates**: `templates/` - Twig templates for admin and shop with Twig hooks support
@@ -113,12 +113,10 @@ Database credentials should be configured in:
 - `tests/TestApplication/.env` (for development)
 - `tests/TestApplication/.env.test` (for testing)
 
-## AI Development Guides
+## Plugin purpose
 
-This project includes specialized AI guides to assist with common plugin development tasks:
+Carrier-agnostic relay point ("point relais") selection plugin for the Sylius checkout. Core extension points:
+- `RelayPointProviderInterface` — implemented by carrier-specific providers (e.g. Mondial Relay, Chronopost, or any third-party carrier) to search pickup points.
+- `GeocodingProviderInterface` — implemented by geocoding backends (Nominatim by default, self-hosted) to resolve an address query to coordinates.
 
-- **CLEANUP_GUIDE.md** - Guidelines for cleaning up and organizing plugin code
-- **RENAME_GUIDE.md** - Step-by-step instructions for renaming plugins and components
-- **COMPATIBILITY_GUIDE.md** - Best practices for maintaining compatibility across different Sylius versions
-
-These guides provide detailed instructions and automated workflows to help maintain code quality and ensure proper plugin structure.
+See `COMPATIBILITY_GUIDE.md` for notes on supported Sylius versions.

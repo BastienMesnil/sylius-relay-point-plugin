@@ -8,9 +8,9 @@
     </a>
 </p>
 
-<h1 align="center">Plugin Skeleton</h1>
+<h1 align="center">Sylius Relay Point Plugin</h1>
 
-<p align="center">Skeleton for starting Sylius plugins.</p>
+<p align="center">Carrier-agnostic relay point ("point relais") selection for the Sylius checkout, with a pluggable interface for carriers and geocoding backends.</p>
 
 ## Documentation
 
@@ -20,8 +20,6 @@ there you will find the <a href="https://docs.sylius.com/plugins-development-gui
 For more information about the **Test Application** included in the skeleton, please refer to the [Sylius documentation](https://docs.sylius.com/plugins-development-guide/test-application).
 
 ## Quickstart Installation
-
-Run `composer create-project sylius/plugin-skeleton ProjectName`.
 
 ### Traditional
 
