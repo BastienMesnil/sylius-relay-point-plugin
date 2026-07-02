@@ -1,5 +1,9 @@
 # Sylius Relay Point Plugin
 
+[![CI](https://github.com/BastienMesnil/sylius-relay-point-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/BastienMesnil/sylius-relay-point-plugin/actions/workflows/ci.yml)
+[![PHP](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://www.php.net)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 Carrier-agnostic relay point ("point relais") selection for the Sylius 2.x checkout.
 
 Any carrier — French or international — can plug in by implementing a single PHP interface. Geocoding is equally swappable: Addok (French BAN, default, no API key), Nominatim, Google Maps, or Photon.
@@ -10,7 +14,7 @@ Any carrier — French or international — can plug in by implementing a single
 
 - **Carrier-agnostic** — implement `RelayPointProviderInterface` to add any carrier without touching the plugin core
 - **Geocoding-agnostic** — switch between Addok, Nominatim, Google Maps, Photon, or your own backend via config
-- **Built-in providers** — Mondial Relay, Chronopost, Shop2Shop, Colissimo, InPost, Colis Privé (skeleton)
+- **Built-in providers** — Mondial Relay, Chronopost, Shop2Shop, Colissimo, InPost, DPD, DHL, Packeta, Colis Privé (skeleton)
 - **Checkout UX** — Stimulus controller + Leaflet map, embeddable in any Sylius checkout template
 - **Session persistence** — selected relay point stored in session, readable server-side during checkout completion
 
@@ -131,6 +135,38 @@ keirontw_sylius_relay_point:
             password: '%env(COLIS_PRIVE_PASSWORD)%'
             shipping_method_codes:
                 - colis_prive_relay
+
+        # ── International (REST, no SOAP) ────────────────────────────────────
+
+        dpd:
+            enabled: true
+            # API key: https://developer.dpd.com (free, covers all EU countries)
+            api_key: '%env(DPD_API_KEY)%'
+            shipping_method_codes:
+                - dpd_pickup_france
+                - dpd_pickup_germany
+                - dpd_pickup_belgium
+
+        dhl:
+            enabled: true
+            # API key: https://developer.dhl.com (free)
+            api_key: '%env(DHL_API_KEY)%'
+            # parcel:pick-up  → DHL ServicePoints
+            # parcel:drop-off-easy → DHL Packstations (Germany)
+            service_type: 'parcel:pick-up'
+            shipping_method_codes:
+                - dhl_servicepoint_france
+                - dhl_servicepoint_germany
+
+        packeta:
+            enabled: true
+            # API key: https://client.packeta.com (free for merchants)
+            # Covers: CZ, SK, PL, HU, RO, DE, AT, FR, IT, ES, BE and more
+            api_key: '%env(PACKETA_API_KEY)%'
+            shipping_method_codes:
+                - packeta_czech_republic
+                - packeta_slovakia
+                - packeta_poland
 ```
 
 > **Note — Colis Privé relay points:** Colis Privé's label generation API (`WSCP.asmx`) is separate from their relay point search API. The WSDL URL and method name for relay point search must be confirmed with Colis Privé technical support before enabling this provider. The provider skeleton (`ColisPriveRelayProvider`) is ready and only needs the correct endpoint and field mapping.
