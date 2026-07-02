@@ -1,0 +1,116 @@
+{#
+  Relay Point Picker widget — include this template anywhere in the checkout.
+
+  Required variables:
+    searchUrl    (string)  — route('keirontw_relay_point_shop_search')
+    geocodeUrl   (string)  — route('keirontw_relay_point_shop_geocode')
+    methodCodes  (array)   — Sylius shipping method codes to search (relay ones only)
+
+  Optional variables:
+    addressStreet   (string)  — pre-filled from checkout shipping address
+    addressCity     (string)
+    addressPostcode (string)
+    addressCountry  (string)
+
+  Events emitted (bubble up to window):
+    relay-point-picker:selected  — detail.point contains the chosen RelayPoint data
+    relay-point-picker:confirmed — detail.point after the user clicks "Confirm"
+
+  Example:
+    {% include '@KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig' with {
+        searchUrl:      path('keirontw_relay_point_shop_search'),
+        geocodeUrl:     path('keirontw_relay_point_shop_geocode'),
+        methodCodes:    ['mondial_relay_fr', 'chronopost_pickup_fr'],
+        addressStreet:  order.shippingAddress.street,
+        addressCity:    order.shippingAddress.city,
+        addressPostcode: order.shippingAddress.postcode,
+        addressCountry: order.shippingAddress.countryCode,
+    } %}
+#}
+<div
+    data-controller="relay-point-picker"
+    data-relay-point-picker-search-url-value="{{ searchUrl }}"
+    data-relay-point-picker-geocode-url-value="{{ geocodeUrl }}"
+    data-relay-point-picker-method-codes-value="{{ methodCodes|json_encode }}"
+    data-relay-point-picker-address-street-value="{{ addressStreet|default('') }}"
+    data-relay-point-picker-address-city-value="{{ addressCity|default('') }}"
+    data-relay-point-picker-address-postcode-value="{{ addressPostcode|default('') }}"
+    data-relay-point-picker-address-country-value="{{ addressCountry|default('FR') }}"
+>
+    {# ── Search bar ─────────────────────────────────────────────────────── #}
+    <div class="flex gap-2 mb-3">
+        <form data-action="submit->relay-point-picker#handleSearch" class="flex flex-1 gap-2">
+            <input
+                type="text"
+                data-relay-point-picker-target="searchInput"
+                placeholder="Rechercher une adresse, un code postal…"
+                class="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+            <button type="submit"
+                class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium transition-colors">
+                Rechercher
+            </button>
+        </form>
+
+        {# Carrier filter — hidden when only one carrier is present (built dynamically by JS) #}
+        <div data-relay-point-picker-target="filterContainer" class="hidden relative">
+            <button type="button"
+                class="h-10 px-4 rounded-full border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors"
+                onclick="this.nextElementSibling.classList.toggle('hidden')">
+                Filtrer
+            </button>
+            <div class="hidden absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 p-3 w-56">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Transporteur</p>
+                <div data-carrier-list class="space-y-1"></div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Map + List grid ────────────────────────────────────────────────── #}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {# List #}
+        <div class="order-2 md:order-1 h-[300px] md:h-[360px] overflow-y-auto rounded-lg border border-gray-200 bg-white">
+            <div data-relay-point-picker-target="list">
+                <p class="p-6 text-center text-sm text-gray-400 italic">Chargement des points relais…</p>
+            </div>
+        </div>
+
+        {# Map #}
+        <div class="order-1 md:order-2">
+            <div data-relay-map class="h-[300px] md:h-[360px] rounded-lg border border-gray-200 z-0"></div>
+        </div>
+    </div>
+
+    {# ── Selected point summary ──────────────────────────────────────────── #}
+    <div data-relay-point-picker-target="selectedPointInfo"
+        class="hidden mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+        <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                    <span data-relay-point-picker-target="pointCarrier"
+                        class="text-[10px] font-bold uppercase px-2 py-0.5 rounded"></span>
+                    <span data-relay-point-picker-target="pointDistance"
+                        class="text-xs text-gray-400"></span>
+                </div>
+                <h5 data-relay-point-picker-target="pointName"
+                    class="font-semibold text-gray-900 text-sm"></h5>
+                <p data-relay-point-picker-target="pointAddress"
+                    class="text-xs text-gray-500 mt-0.5"></p>
+            </div>
+
+            <div class="md:border-l md:pl-4 border-gray-200">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Horaires</p>
+                <div data-relay-point-picker-target="openingHoursContainer"
+                    class="space-y-0.5"></div>
+            </div>
+        </div>
+
+        <div class="mt-3 pt-3 border-t border-blue-200 flex justify-end">
+            <button type="button"
+                data-action="click->relay-point-picker#confirmSelection"
+                class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2 rounded-full transition-colors">
+                ✓ Confirmer ce point relais
+            </button>
+        </div>
+    </div>
+</div>

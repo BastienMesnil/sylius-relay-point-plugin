@@ -1,1 +1,13 @@
-# Define your shop routes here
+keirontw_relay_point_shop_search:
+    path: /{_locale}/relay-points/search
+    methods: [GET]
+    controller: Keirontw\SyliusRelayPointPlugin\Controller\Shop\RelayPointSearchController::search
+    requirements:
+        _locale: '[a-z]{2}(_[A-Z]{2})?'
+
+keirontw_relay_point_shop_geocode:
+    path: /{_locale}/relay-points/geocode
+    methods: [GET]
+    controller: Keirontw\SyliusRelayPointPlugin\Controller\Shop\RelayPointSearchController::geocode
+    requirements:
+        _locale: '[a-z]{2}(_[A-Z]{2})?'

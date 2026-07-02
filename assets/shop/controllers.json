@@ -1,4 +1,11 @@
 {
-  "controllers": [],
+  "controllers": [
+    {
+      "name": "relay-point-picker",
+      "main": "./controllers/relay-point-picker_controller.js",
+      "enabled": true,
+      "fetch": "eager"
+    }
+  ],
   "entrypoints": []
 }
