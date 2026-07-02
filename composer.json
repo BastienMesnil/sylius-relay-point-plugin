@@ -1,11 +1,18 @@
 {
     "name": "keirontw/sylius-relay-point-plugin",
     "type": "sylius-plugin",
-    "description": "Carrier-agnostic relay point selection plugin for Sylius checkout",
+    "description": "Carrier-agnostic relay point (point relais) selection plugin for Sylius 2.x checkout",
     "keywords": [
         "sylius",
         "sylius-plugin",
-        "test-appication"
+        "relay-point",
+        "point-relais",
+        "mondial-relay",
+        "chronopost",
+        "colissimo",
+        "inpost",
+        "pickup",
+        "checkout"
     ],
     "license": "MIT",
     "require": {

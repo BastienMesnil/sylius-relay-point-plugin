@@ -1,127 +1,336 @@
-<p align="center">
-    <a href="https://sylius.com" target="_blank">
-        <picture>
-          <source media="(prefers-color-scheme: dark)" srcset="https://media.sylius.com/sylius-logo-800-dark.png">
-          <source media="(prefers-color-scheme: light)" srcset="https://media.sylius.com/sylius-logo-800.png">
-          <img alt="Sylius Logo." src="https://media.sylius.com/sylius-logo-800.png">
-        </picture>
-    </a>
-</p>
+# Sylius Relay Point Plugin
 
-<h1 align="center">Sylius Relay Point Plugin</h1>
+Carrier-agnostic relay point ("point relais") selection for the Sylius 2.x checkout.
 
-<p align="center">Carrier-agnostic relay point ("point relais") selection for the Sylius checkout, with a pluggable interface for carriers and geocoding backends.</p>
+Any carrier — French or international — can plug in by implementing a single PHP interface. Geocoding is equally swappable: Addok (French BAN, default, no API key), Nominatim, Google Maps, or Photon.
 
-## Documentation
+---
 
-For a comprehensive guide on Sylius Plugins development please go to Sylius documentation,
-there you will find the <a href="https://docs.sylius.com/plugins-development-guide/how-to-create-a-plugin-for-sylius">Plugin Development Guide</a> - it's a great place to start.
+## Features
 
-For more information about the **Test Application** included in the skeleton, please refer to the [Sylius documentation](https://docs.sylius.com/plugins-development-guide/test-application).
+- **Carrier-agnostic** — implement `RelayPointProviderInterface` to add any carrier without touching the plugin core
+- **Geocoding-agnostic** — switch between Addok, Nominatim, Google Maps, Photon, or your own backend via config
+- **Built-in providers** — Mondial Relay, Chronopost, Shop2Shop, Colissimo, InPost, Colis Privé (skeleton)
+- **Checkout UX** — Stimulus controller + Leaflet map, embeddable in any Sylius checkout template
+- **Session persistence** — selected relay point stored in session, readable server-side during checkout completion
 
-## Quickstart Installation
+---
 
-### Traditional
+## Requirements
 
-1. From the plugin skeleton root directory, run the following commands:
+- PHP 8.2+
+- Sylius 2.0+
+- Symfony 7.4+
+- `ext-soap` (for SOAP-based carriers: Mondial Relay, Chronopost, Colissimo, Colis Privé)
+- `symfony/http-client` (for REST-based providers: InPost, Addok, Nominatim, Google Maps, Photon)
 
-    ```bash
-    (cd vendor/sylius/test-application && yarn install)
-    (cd vendor/sylius/test-application && yarn build)
-    vendor/bin/console assets:install
-   
-    vendor/bin/console doctrine:database:create
-    vendor/bin/console doctrine:migrations:migrate -n
-    # Optionally load data fixtures
-    vendor/bin/console sylius:fixtures:load -n
-    ```
+---
 
-To be able to set up a plugin's database, remember to configure your database credentials in `tests/TestApplication/.env` and `tests/TestApplication/.env.test`.
+## Installation
 
-2. Run your local server:
+```bash
+composer require keirontw/sylius-relay-point-plugin
+```
 
-      ```bash
-      symfony server:ca:install
-      symfony server:start -d
-      ```
+Register the plugin in `config/bundles.php`:
 
-3. Open your browser and navigate to `https://localhost:8000`.
+```php
+return [
+    // ...
+    Keirontw\SyliusRelayPointPlugin\KeirontwSyliusRelayPointPlugin::class => ['all' => true],
+];
+```
 
-### Docker
+Import plugin routes in `config/routes.yaml`:
 
-1. Execute `make init` to initialize the container and install the dependencies.
+```yaml
+keirontw_sylius_relay_point_shop:
+    resource: "@KeirontwSyliusRelayPointPlugin/config/routes/shop.yaml"
+```
 
-2. Execute `make database-init` to create the database and run migrations.
+---
 
-3. (Optional) Execute `make load-fixtures` to load the fixtures.
+## Configuration
 
-4. Your app is available at `http://localhost`.
+Create `config/packages/keirontw_sylius_relay_point.yaml`:
 
-## Usage
+```yaml
+keirontw_sylius_relay_point:
 
-### Running plugin tests
+    # ── Geocoding ────────────────────────────────────────────────────────────
+    geocoding:
+        # addok: French BAN (free, no key, best for France) — default
+        # nominatim: self-hosted OSM (public nominatim.openstreetmap.org forbids SaaS use)
+        # google_maps: commercial worldwide
+        # photon: self-hosted OSM, lightweight
+        # custom: wire your own GeocodingProviderInterface alias in services.yaml
+        provider: addok
 
-  - PHPUnit
+        addok:
+            url: 'https://api-adresse.data.gouv.fr/search/'  # or your self-hosted Addok
 
-    ```bash
-    vendor/bin/phpunit
-    ```
+        nominatim:
+            url: 'https://your-nominatim.example.com/search'
+            user_agent: 'MyShop (contact@myshop.com)'
+            contact_email: 'contact@myshop.com'
+            secret: ~  # optional X-Nominatim-Secret header for self-hosted instances
 
-  - Behat (non-JS scenarios)
+        google_maps:
+            api_key: '%env(GOOGLE_MAPS_API_KEY)%'
 
-    ```bash
-    vendor/bin/behat --strict --tags="~@javascript&&~@mink:chromedriver"
-    ```
+        photon:
+            url: 'https://your-photon.example.com/api'
+            lang: fr
 
-  - Behat (JS scenarios)
- 
-    1. [Install Symfony CLI command](https://symfony.com/download).
- 
-    2. Start Headless Chrome:
-    
-      ```bash
-      google-chrome-stable --enable-automation --disable-background-networking --no-default-browser-check --no-first-run --disable-popup-blocking --disable-default-apps --allow-insecure-localhost --disable-translate --disable-extensions --no-sandbox --enable-features=Metal --headless --remote-debugging-port=9222 --window-size=2880,1800 --proxy-server='direct://' --proxy-bypass-list='*' http://127.0.0.1
-      ```
-    
-    3. Install SSL certificates (only once needed) and run test application's webserver on `127.0.0.1:8080`:
-    
-      ```bash
-      symfony server:ca:install
-      APP_ENV=test symfony server:start --port=8080 --daemon
-      ```
-    
-    4. Run Behat:
-    
-      ```bash
-      vendor/bin/behat --strict --tags="@javascript,@mink:chromedriver"
-      ```
-    
-  - Static Analysis
-      
-    - PHPStan
-    
-      ```bash
-      vendor/bin/phpstan analyse -c phpstan.neon -l max src/  
-      ```
+    # ── Carrier providers ────────────────────────────────────────────────────
+    providers:
 
-  - Coding Standard
-  
-    ```bash
-    vendor/bin/ecs check
-    ```
+        mondial_relay:
+            enabled: true
+            account:  '%env(MONDIAL_RELAY_ACCOUNT)%'
+            password: '%env(MONDIAL_RELAY_PASSWORD)%'
+            shipping_method_codes:
+                - mondial_relay_france
+                - mondial_relay_belgium
 
-### Opening Sylius with your plugin
+        chronopost:
+            enabled: true
+            account:  '%env(CHRONOPOST_ACCOUNT)%'
+            password: '%env(CHRONOPOST_PASSWORD)%'
+            shipping_method_codes:
+                - chronopost_pickup_france
 
-- Using `test` environment:
+        shop2shop:
+            enabled: true
+            account:  '%env(SHOP2SHOP_ACCOUNT)%'
+            password: '%env(SHOP2SHOP_PASSWORD)%'
+            shipping_method_codes:
+                - shop2shop_france
 
-    ```bash
-    APP_ENV=test vendor/bin/console sylius:fixtures:load -n
-    APP_ENV=test symfony server:start -d
-    ```
-    
-- Using `dev` environment:
+        colissimo:
+            enabled: true
+            account_number: '%env(COLISSIMO_ACCOUNT)%'
+            password:       '%env(COLISSIMO_PASSWORD)%'
+            filter_relay: 'A'  # A=all, P=relay points only, C=lockers only
+            shipping_method_codes:
+                - colissimo_pickup_france
 
-    ```bash
-    vendor/bin/console sylius:fixtures:load -n
-    symfony server:start -d
-    ```
+        inpost:
+            enabled: true
+            # Country-specific endpoints:
+            # France:  https://api.inpost.fr/v1/points
+            # Poland:  https://api-pl-points.easypack24.net/v1/points
+            # UK:      https://api.inpost.co.uk/v1/points
+            base_url: 'https://api.inpost.fr/v1/points'
+            shipping_method_codes:
+                - inpost_france
+
+        colis_prive:
+            enabled: false   # See note below — relay point WSDL pending confirmation
+            login:    '%env(COLIS_PRIVE_LOGIN)%'
+            password: '%env(COLIS_PRIVE_PASSWORD)%'
+            shipping_method_codes:
+                - colis_prive_relay
+```
+
+> **Note — Colis Privé relay points:** Colis Privé's label generation API (`WSCP.asmx`) is separate from their relay point search API. The WSDL URL and method name for relay point search must be confirmed with Colis Privé technical support before enabling this provider. The provider skeleton (`ColisPriveRelayProvider`) is ready and only needs the correct endpoint and field mapping.
+
+---
+
+## Checkout integration
+
+### 1. Include the widget in your shipping step template
+
+```twig
+{# templates/checkout/shipping.html.twig (or via Sylius Twig Hook) #}
+
+{% include '@KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig' with {
+    searchUrl:       path('keirontw_relay_point_shop_search'),
+    geocodeUrl:      path('keirontw_relay_point_shop_geocode'),
+    selectUrl:       path('keirontw_relay_point_shop_select'),
+    methodCodes:     ['mondial_relay_france', 'chronopost_pickup_france'],
+    cartToken:       cart.tokenValue,
+    addressStreet:   cart.shippingAddress.street,
+    addressCity:     cart.shippingAddress.city,
+    addressPostcode: cart.shippingAddress.postcode,
+    addressCountry:  cart.shippingAddress.countryCode,
+} %}
+```
+
+The widget handles:
+- Address geocoding via the configured provider
+- Parallel search across all `methodCodes`
+- Leaflet map with per-carrier colour coding
+- Dynamic carrier filter (built from the actual response)
+- Opening hours toggle per point
+
+### 2. Register the Stimulus controller
+
+The plugin ships a Stimulus controller (`relay-point-picker`). Add it to your `assets/controllers.json`:
+
+```json
+{
+    "controllers": [
+        {
+            "name": "@keirontw/sylius-relay-point-plugin/relay-point-picker",
+            "enabled": true,
+            "fetch": "eager"
+        }
+    ]
+}
+```
+
+Or copy `assets/shop/controllers/relay-point-picker_controller.js` directly into your project's `assets/controllers/` folder and import it manually.
+
+### 3. Handle the selection event
+
+The Stimulus controller dispatches two events that bubble up to the `window`:
+
+| Event | When | `event.detail` |
+|---|---|---|
+| `relay-point-picker:selected` | User clicks a relay point in the list or map | `{ point }` |
+| `relay-point-picker:confirmed` | User clicks "Confirm" | `{ point }` |
+
+When `selectUrl` is provided, the plugin automatically POSTs the selection to the session on confirm. Listen to `relay-point-picker:confirmed` in your own Stimulus controller to trigger the next checkout step:
+
+```js
+// assets/controllers/checkout_controller.js
+import { Controller } from '@hotwired/stimulus';
+
+export default class extends Controller {
+    connect() {
+        this.element.addEventListener('relay-point-picker:confirmed', this.onRelayConfirmed.bind(this));
+    }
+
+    onRelayConfirmed(event) {
+        const { point } = event.detail;
+        // e.g. submit the checkout form, update a hidden field, redirect...
+        this.element.querySelector('form').submit();
+    }
+}
+```
+
+### 4. Read the selection server-side
+
+During checkout completion (e.g. in an event subscriber on `sylius.order.pre_complete`), inject `RelayPointSessionStorage` and read the selection:
+
+```php
+use Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSessionStorage;
+
+final class ApplyRelayPointSubscriber implements EventSubscriberInterface
+{
+    public function __construct(
+        private readonly RelayPointSessionStorage $storage,
+    ) {}
+
+    public static function getSubscribedEvents(): array
+    {
+        return ['sylius.order.pre_complete' => 'onPreComplete'];
+    }
+
+    public function onPreComplete(GenericEvent $event): void
+    {
+        $order = $event->getSubject();
+        $selected = $this->storage->get($order->getTokenValue());
+
+        if (null === $selected) {
+            return;
+        }
+
+        // Update the order shipping address with relay point data
+        $address = $order->getShippingAddress();
+        $address->setStreet($selected->street);
+        $address->setPostcode($selected->postcode);
+        $address->setCity($selected->city);
+        $address->setCountryCode($selected->countryCode);
+        // Store relay point id for label generation (your own entity field):
+        // $address->setRelayPointId($selected->id);
+
+        $this->storage->clear($order->getTokenValue());
+    }
+}
+```
+
+---
+
+## Adding a custom carrier
+
+Implement `RelayPointProviderInterface` and tag the service. That's it — no YAML mapping, no plugin config change needed.
+
+```php
+// src/Shipping/DpdProvider.php
+use Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointProviderInterface;
+use Keirontw\SyliusRelayPointPlugin\RelayPoint\Model\RelayPoint;
+use Keirontw\SyliusRelayPointPlugin\RelayPoint\Model\RelayPointSearchCriteria;
+
+final class DpdProvider implements RelayPointProviderInterface
+{
+    public function __construct(
+        private readonly string $apiKey,
+        private readonly array $shippingMethodCodes,
+    ) {}
+
+    public function supports(string $shippingMethodCode): bool
+    {
+        return in_array($shippingMethodCode, $this->shippingMethodCodes, true);
+    }
+
+    /** @return RelayPoint[] */
+    public function search(RelayPointSearchCriteria $criteria): array
+    {
+        // Call DPD Pickup REST API and map results to RelayPoint DTOs
+        return [];
+    }
+}
+```
+
+Register the service — autoconfiguration applies the tag automatically via `_instanceof`:
+
+```yaml
+# config/services.yaml
+App\Shipping\DpdProvider:
+    arguments:
+        $apiKey: '%env(DPD_API_KEY)%'
+        $shippingMethodCodes: ['dpd_pickup_france']
+```
+
+The provider is immediately discoverable by the plugin registry without any further change.
+
+---
+
+## Adding a custom geocoding provider
+
+Implement `GeocodingProviderInterface`:
+
+```php
+use Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface;
+use Keirontw\SyliusRelayPointPlugin\Geocoding\Model\GeocodingResult;
+
+final class MyGeocoder implements GeocodingProviderInterface
+{
+    public function geocode(string $query): ?GeocodingResult
+    {
+        // ...
+        return new GeocodingResult(latitude: 48.8, longitude: 2.3, postcode: '75001', city: 'Paris', countryCode: 'FR');
+    }
+}
+```
+
+Set `provider: custom` in the plugin config and alias the interface in your services:
+
+```yaml
+# config/packages/keirontw_sylius_relay_point.yaml
+keirontw_sylius_relay_point:
+    geocoding:
+        provider: custom
+
+# config/services.yaml
+Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface:
+    alias: App\Geocoding\MyGeocoder
+```
+
+---
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
