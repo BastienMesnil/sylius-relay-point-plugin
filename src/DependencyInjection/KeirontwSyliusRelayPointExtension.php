@@ -9,12 +9,14 @@ use Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface;
 use Keirontw\SyliusRelayPointPlugin\Geocoding\GoogleMapsProvider;
 use Keirontw\SyliusRelayPointPlugin\Geocoding\NominatimProvider;
 use Keirontw\SyliusRelayPointPlugin\Geocoding\PhotonProvider;
+use Keirontw\SyliusRelayPointPlugin\Provider\MondialRelay\MondialRelayProvider;
 use Sylius\Bundle\CoreBundle\DependencyInjection\PrependDoctrineMigrationsTrait;
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Extension\AbstractResourceExtension;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Reference;
 
 final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension implements PrependExtensionInterface
 {
@@ -39,6 +41,24 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
         $loader->load('services.xml');
 
         $this->wireGeocodingProvider($container, $geocoding['provider'], $geocoding);
+        $this->wireCarrierProviders($container, $config['providers']);
+    }
+
+    private function wireCarrierProviders(ContainerBuilder $container, array $providers): void
+    {
+        $mondialRelay = $providers['mondial_relay'];
+
+        if (!($mondialRelay['enabled'] ?? false)) {
+            return;
+        }
+
+        $container->register(MondialRelayProvider::class, MondialRelayProvider::class)
+            ->addArgument($mondialRelay['account'])
+            ->addArgument($mondialRelay['password'])
+            ->addArgument($mondialRelay['shipping_method_codes'])
+            ->addArgument(new Reference('logger'))
+            ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+            ->setPublic(false);
     }
 
     private function wireGeocodingProvider(ContainerBuilder $container, string $provider, array $geocoding): void
