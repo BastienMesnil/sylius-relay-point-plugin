@@ -9,6 +9,7 @@ use Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface;
 use Keirontw\SyliusRelayPointPlugin\Geocoding\GoogleMapsProvider;
 use Keirontw\SyliusRelayPointPlugin\Geocoding\NominatimProvider;
 use Keirontw\SyliusRelayPointPlugin\Geocoding\PhotonProvider;
+use Keirontw\SyliusRelayPointPlugin\Provider\Chronopost\ChronopostProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\MondialRelay\MondialRelayProvider;
 use Sylius\Bundle\CoreBundle\DependencyInjection\PrependDoctrineMigrationsTrait;
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Extension\AbstractResourceExtension;
@@ -48,17 +49,41 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
     {
         $mondialRelay = $providers['mondial_relay'];
 
-        if (!($mondialRelay['enabled'] ?? false)) {
-            return;
+        if ($mondialRelay['enabled'] ?? false) {
+            $container->register(MondialRelayProvider::class, MondialRelayProvider::class)
+                ->addArgument($mondialRelay['account'])
+                ->addArgument($mondialRelay['password'])
+                ->addArgument($mondialRelay['shipping_method_codes'])
+                ->addArgument(new Reference('logger'))
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
         }
 
-        $container->register(MondialRelayProvider::class, MondialRelayProvider::class)
-            ->addArgument($mondialRelay['account'])
-            ->addArgument($mondialRelay['password'])
-            ->addArgument($mondialRelay['shipping_method_codes'])
-            ->addArgument(new Reference('logger'))
-            ->addTag('keirontw_sylius_relay_point.relay_point_provider')
-            ->setPublic(false);
+        $chronopost = $providers['chronopost'];
+
+        if ($chronopost['enabled'] ?? false) {
+            $container->register('keirontw.relay_point.chronopost_provider', ChronopostProvider::class)
+                ->addArgument($chronopost['account'])
+                ->addArgument($chronopost['password'])
+                ->addArgument($chronopost['shipping_method_codes'])
+                ->addArgument('chronopost')
+                ->addArgument(new Reference('logger'))
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
+        }
+
+        $shop2shop = $providers['shop2shop'];
+
+        if ($shop2shop['enabled'] ?? false) {
+            $container->register('keirontw.relay_point.shop2shop_provider', ChronopostProvider::class)
+                ->addArgument($shop2shop['account'])
+                ->addArgument($shop2shop['password'])
+                ->addArgument($shop2shop['shipping_method_codes'])
+                ->addArgument('shop2shop')
+                ->addArgument(new Reference('logger'))
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
+        }
     }
 
     private function wireGeocodingProvider(ContainerBuilder $container, string $provider, array $geocoding): void
