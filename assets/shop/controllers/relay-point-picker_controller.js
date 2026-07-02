@@ -34,6 +34,8 @@ export default class extends Controller {
     static values = {
         searchUrl: String,
         geocodeUrl: { type: String, default: '/relay-points/geocode' },
+        selectUrl: { type: String, default: '' },  // POST endpoint; if empty, only the JS event is dispatched
+        cartToken: { type: String, default: '' },
         methodCodes: { type: Array, default: [] },
         addressStreet: String,
         addressCity: String,
@@ -147,9 +149,33 @@ export default class extends Controller {
         this._selectPoint(point);
     }
 
-    confirmSelection() {
+    async confirmSelection() {
         const point = this.points.find(p => this._key(p) === this.selectedPointKey);
         if (!point) return;
+
+        // Persist to session via plugin endpoint when selectUrl is configured
+        if (this.selectUrlValue) {
+            try {
+                const res = await fetch(this.selectUrlValue, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        shippingMethodCode: point.shippingMethodCode ?? '',
+                        cartToken: this.cartTokenValue || undefined,
+                        point,
+                    }),
+                });
+                if (!res.ok) {
+                    console.error('[relay-point-picker] select endpoint returned', res.status);
+                }
+            } catch (e) {
+                console.error('[relay-point-picker] persist error', e);
+            }
+        }
+
         this.element.dispatchEvent(new CustomEvent('relay-point-picker:confirmed', {
             bubbles: true,
             detail: { point },

@@ -7,6 +7,8 @@
     methodCodes  (array)   — Sylius shipping method codes to search (relay ones only)
 
   Optional variables:
+    selectUrl       (string)  — route('keirontw_relay_point_shop_select') — if omitted, no auto-persist
+    cartToken       (string)  — Sylius cart token, scopes the session key
     addressStreet   (string)  — pre-filled from checkout shipping address
     addressCity     (string)
     addressPostcode (string)
@@ -18,13 +20,15 @@
 
   Example:
     {% include '@KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig' with {
-        searchUrl:      path('keirontw_relay_point_shop_search'),
-        geocodeUrl:     path('keirontw_relay_point_shop_geocode'),
-        methodCodes:    ['mondial_relay_fr', 'chronopost_pickup_fr'],
-        addressStreet:  order.shippingAddress.street,
-        addressCity:    order.shippingAddress.city,
+        searchUrl:       path('keirontw_relay_point_shop_search'),
+        geocodeUrl:      path('keirontw_relay_point_shop_geocode'),
+        selectUrl:       path('keirontw_relay_point_shop_select'),
+        methodCodes:     ['mondial_relay_fr', 'chronopost_pickup_fr'],
+        cartToken:       cart.tokenValue,
+        addressStreet:   order.shippingAddress.street,
+        addressCity:     order.shippingAddress.city,
         addressPostcode: order.shippingAddress.postcode,
-        addressCountry: order.shippingAddress.countryCode,
+        addressCountry:  order.shippingAddress.countryCode,
     } %}
 #}
 <div
@@ -36,6 +40,8 @@
     data-relay-point-picker-address-city-value="{{ addressCity|default('') }}"
     data-relay-point-picker-address-postcode-value="{{ addressPostcode|default('') }}"
     data-relay-point-picker-address-country-value="{{ addressCountry|default('FR') }}"
+    {% if selectUrl is defined %}data-relay-point-picker-select-url-value="{{ selectUrl }}"{% endif %}
+    {% if cartToken is defined %}data-relay-point-picker-cart-token-value="{{ cartToken }}"{% endif %}
 >
     {# ── Search bar ─────────────────────────────────────────────────────── #}
     <div class="flex gap-2 mb-3">

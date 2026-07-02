@@ -59,6 +59,7 @@ final class RelayPointSearchController extends AbstractController
         return new JsonResponse(array_map(
             static fn (RelayPoint $p) => [
                 'id' => $p->id,
+                'shippingMethodCode' => $shippingMethodCode,
                 'name' => $p->name,
                 'street' => $p->street,
                 'postcode' => $p->postcode,

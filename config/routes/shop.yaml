@@ -1,3 +1,17 @@
+keirontw_relay_point_shop_select:
+    path: /{_locale}/relay-points/select
+    methods: [POST]
+    controller: Keirontw\SyliusRelayPointPlugin\Controller\Shop\RelayPointSelectController::select
+    requirements:
+        _locale: '[a-z]{2}(_[A-Z]{2})?'
+
+keirontw_relay_point_shop_clear:
+    path: /{_locale}/relay-points/clear
+    methods: [POST]
+    controller: Keirontw\SyliusRelayPointPlugin\Controller\Shop\RelayPointSelectController::clear
+    requirements:
+        _locale: '[a-z]{2}(_[A-Z]{2})?'
+
 keirontw_relay_point_shop_search:
     path: /{_locale}/relay-points/search
     methods: [GET]

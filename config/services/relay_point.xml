@@ -20,6 +20,18 @@
         </service>
         <service id="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchServiceInterface" alias="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchService" public="true" />
 
+        <service id="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSessionStorage">
+            <argument type="service" id="request_stack" />
+        </service>
+
+        <service id="Keirontw\SyliusRelayPointPlugin\Controller\Shop\RelayPointSelectController" public="true">
+            <argument type="service" id="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSessionStorage" />
+            <call method="setContainer">
+                <argument type="service" id="service_container" />
+            </call>
+            <tag name="controller.service_arguments" />
+        </service>
+
         <service id="Keirontw\SyliusRelayPointPlugin\Controller\Shop\RelayPointSearchController" public="true">
             <argument type="service" id="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSearchServiceInterface" />
             <argument type="service" id="Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface" />
