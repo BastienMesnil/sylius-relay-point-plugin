@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Keirontw\SyliusRelayPointPlugin\DependencyInjection;
 
+use Keirontw\SyliusRelayPointPlugin\Geocoding\AddokProvider;
+use Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface;
+use Keirontw\SyliusRelayPointPlugin\Geocoding\GoogleMapsProvider;
+use Keirontw\SyliusRelayPointPlugin\Geocoding\NominatimProvider;
+use Keirontw\SyliusRelayPointPlugin\Geocoding\PhotonProvider;
 use Sylius\Bundle\CoreBundle\DependencyInjection\PrependDoctrineMigrationsTrait;
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Extension\AbstractResourceExtension;
 use Symfony\Component\Config\FileLocator;
@@ -19,14 +24,45 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
     {
         $config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
 
-        $container->setParameter('keirontw_sylius_relay_point.nominatim.url', $config['nominatim']['url']);
-        $container->setParameter('keirontw_sylius_relay_point.nominatim.secret', $config['nominatim']['secret']);
-        $container->setParameter('keirontw_sylius_relay_point.nominatim.user_agent', $config['nominatim']['user_agent']);
-        $container->setParameter('keirontw_sylius_relay_point.nominatim.contact_email', $config['nominatim']['contact_email']);
+        $geocoding = $config['geocoding'];
+
+        $container->setParameter('keirontw_sylius_relay_point.geocoding.addok.url', $geocoding['addok']['url']);
+        $container->setParameter('keirontw_sylius_relay_point.geocoding.nominatim.url', $geocoding['nominatim']['url']);
+        $container->setParameter('keirontw_sylius_relay_point.geocoding.nominatim.secret', $geocoding['nominatim']['secret']);
+        $container->setParameter('keirontw_sylius_relay_point.geocoding.nominatim.user_agent', $geocoding['nominatim']['user_agent']);
+        $container->setParameter('keirontw_sylius_relay_point.geocoding.nominatim.contact_email', $geocoding['nominatim']['contact_email']);
+        $container->setParameter('keirontw_sylius_relay_point.geocoding.google_maps.api_key', $geocoding['google_maps']['api_key'] ?? '');
+        $container->setParameter('keirontw_sylius_relay_point.geocoding.photon.url', $geocoding['photon']['url'] ?? '');
+        $container->setParameter('keirontw_sylius_relay_point.geocoding.photon.lang', $geocoding['photon']['lang']);
 
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
-
         $loader->load('services.xml');
+
+        $this->wireGeocodingProvider($container, $geocoding['provider'], $geocoding);
+    }
+
+    private function wireGeocodingProvider(ContainerBuilder $container, string $provider, array $geocoding): void
+    {
+        if ($provider === 'custom') {
+            return;
+        }
+
+        if ($provider === 'google_maps' && empty($geocoding['google_maps']['api_key'])) {
+            throw new \InvalidArgumentException('keirontw_sylius_relay_point.geocoding.google_maps.api_key is required when provider is set to "google_maps".');
+        }
+
+        if ($provider === 'photon' && empty($geocoding['photon']['url'])) {
+            throw new \InvalidArgumentException('keirontw_sylius_relay_point.geocoding.photon.url is required when provider is set to "photon".');
+        }
+
+        $serviceId = match ($provider) {
+            'addok' => AddokProvider::class,
+            'nominatim' => NominatimProvider::class,
+            'google_maps' => GoogleMapsProvider::class,
+            'photon' => PhotonProvider::class,
+        };
+
+        $container->setAlias(GeocodingProviderInterface::class, $serviceId)->setPublic(true);
     }
 
     public function prepend(ContainerBuilder $container): void

@@ -6,20 +6,39 @@
         xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd"
 >
     <services>
+        <service id="Keirontw\SyliusRelayPointPlugin\Geocoding\AddokProvider">
+            <argument type="service" id="http_client" />
+            <argument type="service" id="logger" />
+            <argument>%keirontw_sylius_relay_point.geocoding.addok.url%</argument>
+        </service>
+
         <service id="Keirontw\SyliusRelayPointPlugin\Geocoding\NominatimProvider">
             <argument type="service" id="http_client" />
             <argument type="service" id="logger" />
-            <argument>%keirontw_sylius_relay_point.nominatim.url%</argument>
-            <argument>%keirontw_sylius_relay_point.nominatim.secret%</argument>
-            <argument>%keirontw_sylius_relay_point.nominatim.user_agent%</argument>
-            <argument>%keirontw_sylius_relay_point.nominatim.contact_email%</argument>
+            <argument>%keirontw_sylius_relay_point.geocoding.nominatim.url%</argument>
+            <argument>%keirontw_sylius_relay_point.geocoding.nominatim.secret%</argument>
+            <argument>%keirontw_sylius_relay_point.geocoding.nominatim.user_agent%</argument>
+            <argument>%keirontw_sylius_relay_point.geocoding.nominatim.contact_email%</argument>
+        </service>
+
+        <service id="Keirontw\SyliusRelayPointPlugin\Geocoding\GoogleMapsProvider">
+            <argument type="service" id="http_client" />
+            <argument type="service" id="logger" />
+            <argument>%keirontw_sylius_relay_point.geocoding.google_maps.api_key%</argument>
+        </service>
+
+        <service id="Keirontw\SyliusRelayPointPlugin\Geocoding\PhotonProvider">
+            <argument type="service" id="http_client" />
+            <argument type="service" id="logger" />
+            <argument>%keirontw_sylius_relay_point.geocoding.photon.url%</argument>
+            <argument>%keirontw_sylius_relay_point.geocoding.photon.lang%</argument>
         </service>
 
         <!--
-            Override this alias in your own application's services config to
-            plug in a different GeocodingProviderInterface implementation,
-            e.g. Photon or a paid geocoding API.
+            The active GeocodingProviderInterface alias is set dynamically by the
+            Extension based on keirontw_sylius_relay_point.geocoding.provider config.
+            To use a custom backend, set provider: custom and define your own alias:
+              Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface: '@App\Geocoding\MyProvider'
         -->
-        <service id="Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface" alias="Keirontw\SyliusRelayPointPlugin\Geocoding\NominatimProvider" public="true" />
     </services>
 </container>
