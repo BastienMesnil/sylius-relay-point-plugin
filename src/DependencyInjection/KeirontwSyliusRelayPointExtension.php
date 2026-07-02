@@ -12,8 +12,11 @@ use Keirontw\SyliusRelayPointPlugin\Geocoding\PhotonProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\Chronopost\ChronopostProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\Colissimo\ColissimoProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\ColisPrive\ColisPriveRelayProvider;
+use Keirontw\SyliusRelayPointPlugin\Provider\Dhl\DhlProvider;
+use Keirontw\SyliusRelayPointPlugin\Provider\Dpd\DpdProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\InPost\InPostProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\MondialRelay\MondialRelayProvider;
+use Keirontw\SyliusRelayPointPlugin\Provider\Packeta\PacketaProvider;
 use Sylius\Bundle\CoreBundle\DependencyInjection\PrependDoctrineMigrationsTrait;
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Extension\AbstractResourceExtension;
 use Symfony\Component\Config\FileLocator;
@@ -121,6 +124,43 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
                 ->addArgument($colisPrive['password'])
                 ->addArgument($colisPrive['shipping_method_codes'])
                 ->addArgument(new Reference('logger'))
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
+        }
+
+        $dpd = $providers['dpd'];
+
+        if ($dpd['enabled'] ?? false) {
+            $container->register('keirontw.relay_point.dpd_provider', DpdProvider::class)
+                ->addArgument(new Reference('http_client'))
+                ->addArgument(new Reference('logger'))
+                ->addArgument($dpd['shipping_method_codes'])
+                ->addArgument($dpd['api_key'])
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
+        }
+
+        $dhl = $providers['dhl'];
+
+        if ($dhl['enabled'] ?? false) {
+            $container->register('keirontw.relay_point.dhl_provider', DhlProvider::class)
+                ->addArgument(new Reference('http_client'))
+                ->addArgument(new Reference('logger'))
+                ->addArgument($dhl['shipping_method_codes'])
+                ->addArgument($dhl['api_key'])
+                ->addArgument($dhl['service_type'])
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
+        }
+
+        $packeta = $providers['packeta'];
+
+        if ($packeta['enabled'] ?? false) {
+            $container->register('keirontw.relay_point.packeta_provider', PacketaProvider::class)
+                ->addArgument(new Reference('http_client'))
+                ->addArgument(new Reference('logger'))
+                ->addArgument($packeta['shipping_method_codes'])
+                ->addArgument($packeta['api_key'])
                 ->addTag('keirontw_sylius_relay_point.relay_point_provider')
                 ->setPublic(false);
         }
