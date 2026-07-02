@@ -10,6 +10,9 @@ use Keirontw\SyliusRelayPointPlugin\Geocoding\GoogleMapsProvider;
 use Keirontw\SyliusRelayPointPlugin\Geocoding\NominatimProvider;
 use Keirontw\SyliusRelayPointPlugin\Geocoding\PhotonProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\Chronopost\ChronopostProvider;
+use Keirontw\SyliusRelayPointPlugin\Provider\Colissimo\ColissimoProvider;
+use Keirontw\SyliusRelayPointPlugin\Provider\ColisPrive\ColisPriveRelayProvider;
+use Keirontw\SyliusRelayPointPlugin\Provider\InPost\InPostProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\MondialRelay\MondialRelayProvider;
 use Sylius\Bundle\CoreBundle\DependencyInjection\PrependDoctrineMigrationsTrait;
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Extension\AbstractResourceExtension;
@@ -80,6 +83,43 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
                 ->addArgument($shop2shop['password'])
                 ->addArgument($shop2shop['shipping_method_codes'])
                 ->addArgument('shop2shop')
+                ->addArgument(new Reference('logger'))
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
+        }
+
+        $colissimo = $providers['colissimo'];
+
+        if ($colissimo['enabled'] ?? false) {
+            $container->register('keirontw.relay_point.colissimo_provider', ColissimoProvider::class)
+                ->addArgument($colissimo['account_number'])
+                ->addArgument($colissimo['password'])
+                ->addArgument($colissimo['shipping_method_codes'])
+                ->addArgument(new Reference('logger'))
+                ->addArgument($colissimo['filter_relay'])
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
+        }
+
+        $inpost = $providers['inpost'];
+
+        if ($inpost['enabled'] ?? false) {
+            $container->register('keirontw.relay_point.inpost_provider', InPostProvider::class)
+                ->addArgument(new Reference('http_client'))
+                ->addArgument(new Reference('logger'))
+                ->addArgument($inpost['shipping_method_codes'])
+                ->addArgument($inpost['base_url'])
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
+        }
+
+        $colisPrive = $providers['colis_prive'];
+
+        if ($colisPrive['enabled'] ?? false) {
+            $container->register('keirontw.relay_point.colis_prive_provider', ColisPriveRelayProvider::class)
+                ->addArgument($colisPrive['login'])
+                ->addArgument($colisPrive['password'])
+                ->addArgument($colisPrive['shipping_method_codes'])
                 ->addArgument(new Reference('logger'))
                 ->addTag('keirontw_sylius_relay_point.relay_point_provider')
                 ->setPublic(false);
