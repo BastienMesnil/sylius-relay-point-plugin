@@ -1,0 +1,30 @@
+{% set method_codes = relay_method_codes() %}
+
+{# Only render if at least one relay carrier is configured and the order has a shipping method that uses relay points #}
+{% set order_method_codes = [] %}
+{% for shipment in order.shipments %}
+    {% if shipment.method is not null %}
+        {% set order_method_codes = order_method_codes|merge([shipment.method.code]) %}
+    {% endif %}
+{% endfor %}
+
+{% set active_relay_codes = [] %}
+{% for code in order_method_codes %}
+    {% if code in method_codes %}
+        {% set active_relay_codes = active_relay_codes|merge([code]) %}
+    {% endif %}
+{% endfor %}
+
+{% if active_relay_codes is not empty %}
+    {% include '@KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig' with {
+        searchUrl:       path('keirontw_relay_point_shop_search'),
+        geocodeUrl:      path('keirontw_relay_point_shop_geocode'),
+        selectUrl:       path('keirontw_relay_point_shop_select'),
+        methodCodes:     active_relay_codes,
+        cartToken:       order.tokenValue,
+        addressStreet:   order.shippingAddress ? order.shippingAddress.street : '',
+        addressCity:     order.shippingAddress ? order.shippingAddress.city : '',
+        addressPostcode: order.shippingAddress ? order.shippingAddress.postcode : '',
+        addressCountry:  order.shippingAddress ? order.shippingAddress.countryCode : '',
+    } %}
+{% endif %}

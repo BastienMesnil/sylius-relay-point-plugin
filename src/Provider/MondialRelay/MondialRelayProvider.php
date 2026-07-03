@@ -31,7 +31,7 @@ final class MondialRelayProvider implements RelayPointProviderInterface
 
     /**
      * @param string[] $shippingMethodCodes Sylius shipping method codes handled by this provider.
-     *                                      Configured via keirontw_sylius_relay_point.providers.mondial_relay.shipping_method_codes
+     * Configured via keirontw_sylius_relay_point.providers.mondial_relay.shipping_method_codes
      */
     public function __construct(
         private readonly string $account,
@@ -115,16 +115,19 @@ final class MondialRelayProvider implements RelayPointProviderInterface
         return $relayPoints;
     }
 
+    /** @return OpeningHours[] */
     private function parseOpeningHours(object $point): array
     {
+        /** @var array<string, mixed> $props */
+        $props = (array) $point;
         $days = [
-            'Lundi' => $point->Horaires_Lundi,
-            'Mardi' => $point->Horaires_Mardi,
-            'Mercredi' => $point->Horaires_Mercredi,
-            'Jeudi' => $point->Horaires_Jeudi,
-            'Vendredi' => $point->Horaires_Vendredi,
-            'Samedi' => $point->Horaires_Samedi,
-            'Dimanche' => $point->Horaires_Dimanche,
+            'Lundi'    => $props['Horaires_Lundi']    ?? null,
+            'Mardi'    => $props['Horaires_Mardi']    ?? null,
+            'Mercredi' => $props['Horaires_Mercredi'] ?? null,
+            'Jeudi'    => $props['Horaires_Jeudi']    ?? null,
+            'Vendredi' => $props['Horaires_Vendredi'] ?? null,
+            'Samedi'   => $props['Horaires_Samedi']   ?? null,
+            'Dimanche' => $props['Horaires_Dimanche'] ?? null,
         ];
 
         $openingHours = [];

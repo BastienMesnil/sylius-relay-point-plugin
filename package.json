@@ -1,0 +1,37 @@
+{
+    "name": "@keirontw/sylius-relay-point-plugin",
+    "version": "1.0.0",
+    "description": "Carrier-agnostic relay point selection widget for Sylius 2.x checkout",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/BastienMesnil/sylius-relay-point-plugin.git"
+    },
+    "keywords": [
+        "sylius",
+        "stimulus",
+        "relay-point",
+        "point-relais",
+        "checkout"
+    ],
+    "main": "assets/shop/controllers/relay-point-picker_controller.js",
+    "exports": {
+        "./relay-point-picker": "./assets/shop/controllers/relay-point-picker_controller.js"
+    },
+    "files": [
+        "assets/"
+    ],
+    "peerDependencies": {
+        "@hotwired/stimulus": "^3.0"
+    },
+    "symfony": {
+        "controllers": {
+            "relay-point-picker": {
+                "main": "assets/shop/controllers/relay-point-picker_controller.js",
+                "fetch": "eager",
+                "enabled": true
+            }
+        },
+        "importmap": []
+    }
+}

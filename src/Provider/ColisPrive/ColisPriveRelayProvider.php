@@ -113,6 +113,7 @@ final class ColisPriveRelayProvider implements RelayPointProviderInterface
         return $points;
     }
 
+    /** @return OpeningHours[] */
     private function parseOpeningHours(object $point): array
     {
         /** @todo adapt to the actual Colis Privé opening hours structure */

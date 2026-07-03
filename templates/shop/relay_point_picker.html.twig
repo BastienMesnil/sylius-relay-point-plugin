@@ -1,5 +1,5 @@
 {#
-  Relay Point Picker widget — include this template anywhere in the checkout.
+  Relay Point Picker widget
 
   Required variables:
     searchUrl    (string)  — route('keirontw_relay_point_shop_search')
@@ -18,20 +18,52 @@
     relay-point-picker:selected  — detail.point contains the chosen RelayPoint data
     relay-point-picker:confirmed — detail.point after the user clicks "Confirm"
 
-  Example:
-    {% include '@KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig' with {
-        searchUrl:       path('keirontw_relay_point_shop_search'),
-        geocodeUrl:      path('keirontw_relay_point_shop_geocode'),
-        selectUrl:       path('keirontw_relay_point_shop_select'),
-        methodCodes:     ['mondial_relay_fr', 'chronopost_pickup_fr'],
-        cartToken:       cart.tokenValue,
-        addressStreet:   order.shippingAddress.street,
-        addressCity:     order.shippingAddress.city,
-        addressPostcode: order.shippingAddress.postcode,
-        addressCountry:  order.shippingAddress.countryCode,
-    } %}
+  ── Customisation ──────────────────────────────────────────────────────────
+  A) CSS variables (theming only, no Twig change needed):
+       --relay-primary          accent / confirm button color      (default: #2563eb)
+       --relay-primary-hover    hover shade of the accent color    (default: #1d4ed8)
+       --relay-primary-bg       light tinted background            (default: #eff6ff)
+       --relay-primary-border   tinted border color                (default: #bfdbfe)
+       --relay-radius           border-radius for cards/inputs     (default: 9999px for inputs, 0.75rem for panels)
+       --relay-border           general border color               (default: #e5e7eb)
+
+  B) Twig blocks (structure overrides via {% embed %}):
+       relay_styles             — CSS variables definition block
+       relay_search_bar         — search input + submit button
+       relay_filter             — carrier filter dropdown
+       relay_grid               — map + list two-column grid
+       relay_list               — scrollable list panel
+       relay_map                — Leaflet map panel
+       relay_selected_summary   — selected point detail panel
+       relay_confirm_button     — the confirm CTA inside the summary
+
+  Example with {% embed %} to override just the confirm button:
+    {% embed '@KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig' with { ... } %}
+        {% block relay_confirm_button %}
+            <button type="button"
+                data-action="click->relay-point-picker#confirmSelection"
+                class="btn btn-primary">
+                Valider ce point relais
+            </button>
+        {% endblock %}
+    {% endembed %}
 #}
+
+{% block relay_styles %}
+<style>
+    .relay-picker {
+        --relay-primary:        #2563eb;
+        --relay-primary-hover:  #1d4ed8;
+        --relay-primary-bg:     #eff6ff;
+        --relay-primary-border: #bfdbfe;
+        --relay-radius:         0.75rem;
+        --relay-border:         #e5e7eb;
+    }
+</style>
+{% endblock %}
+
 <div
+    class="relay-picker"
     data-controller="relay-point-picker"
     data-relay-point-picker-search-url-value="{{ searchUrl }}"
     data-relay-point-picker-geocode-url-value="{{ geocodeUrl }}"
@@ -44,52 +76,69 @@
     {% if cartToken is defined %}data-relay-point-picker-cart-token-value="{{ cartToken }}"{% endif %}
 >
     {# ── Search bar ─────────────────────────────────────────────────────── #}
+    {% block relay_search_bar %}
     <div class="flex gap-2 mb-3">
         <form data-action="submit->relay-point-picker#handleSearch" class="flex flex-1 gap-2">
             <input
                 type="text"
                 data-relay-point-picker-target="searchInput"
                 placeholder="Rechercher une adresse, un code postal…"
-                class="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="flex-1 border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2"
+                style="border-color: var(--relay-border); border-radius: var(--relay-radius); --tw-ring-color: var(--relay-primary);"
             >
             <button type="submit"
-                class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium transition-colors">
+                class="px-4 py-2 text-sm font-medium transition-colors"
+                style="border-radius: var(--relay-radius); background: #f3f4f6;"
+                onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
                 Rechercher
             </button>
         </form>
 
+        {% block relay_filter %}
         {# Carrier filter — hidden when only one carrier is present (built dynamically by JS) #}
         <div data-relay-point-picker-target="filterContainer" class="hidden relative">
             <button type="button"
-                class="h-10 px-4 rounded-full border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors"
+                class="h-10 px-4 text-sm font-medium transition-colors"
+                style="border-radius: var(--relay-radius); border: 1px solid var(--relay-border);"
                 onclick="this.nextElementSibling.classList.toggle('hidden')">
                 Filtrer
             </button>
-            <div class="hidden absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 p-3 w-56">
+            <div class="hidden absolute top-full right-0 mt-1 bg-white shadow-lg z-20 p-3 w-56"
+                style="border: 1px solid var(--relay-border); border-radius: var(--relay-radius);">
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Transporteur</p>
                 <div data-carrier-list class="space-y-1"></div>
             </div>
         </div>
+        {% endblock %}
     </div>
+    {% endblock %}
 
     {# ── Map + List grid ────────────────────────────────────────────────── #}
+    {% block relay_grid %}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {# List #}
-        <div class="order-2 md:order-1 h-[300px] md:h-[360px] overflow-y-auto rounded-lg border border-gray-200 bg-white">
+        {% block relay_list %}
+        <div class="order-2 md:order-1 h-[300px] md:h-[360px] overflow-y-auto bg-white"
+            style="border: 1px solid var(--relay-border); border-radius: var(--relay-radius);">
             <div data-relay-point-picker-target="list">
                 <p class="p-6 text-center text-sm text-gray-400 italic">Chargement des points relais…</p>
             </div>
         </div>
+        {% endblock %}
 
-        {# Map #}
+        {% block relay_map %}
         <div class="order-1 md:order-2">
-            <div data-relay-map class="h-[300px] md:h-[360px] rounded-lg border border-gray-200 z-0"></div>
+            <div data-relay-map class="h-[300px] md:h-[360px] z-0"
+                style="border: 1px solid var(--relay-border); border-radius: var(--relay-radius);"></div>
         </div>
+        {% endblock %}
     </div>
+    {% endblock %}
 
     {# ── Selected point summary ──────────────────────────────────────────── #}
+    {% block relay_selected_summary %}
     <div data-relay-point-picker-target="selectedPointInfo"
-        class="hidden mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+        class="hidden mt-4 p-4"
+        style="background: var(--relay-primary-bg); border: 1px solid var(--relay-primary-border); border-radius: var(--relay-radius);">
         <div class="flex flex-col md:flex-row gap-4">
             <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
@@ -104,19 +153,25 @@
                     class="text-xs text-gray-500 mt-0.5"></p>
             </div>
 
-            <div class="md:border-l md:pl-4 border-gray-200">
+            <div class="md:border-l md:pl-4" style="border-color: var(--relay-border);">
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Horaires</p>
                 <div data-relay-point-picker-target="openingHoursContainer"
                     class="space-y-0.5"></div>
             </div>
         </div>
 
-        <div class="mt-3 pt-3 border-t border-blue-200 flex justify-end">
+        <div class="mt-3 pt-3 flex justify-end" style="border-top: 1px solid var(--relay-primary-border);">
+            {% block relay_confirm_button %}
             <button type="button"
                 data-action="click->relay-point-picker#confirmSelection"
-                class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2 rounded-full transition-colors">
+                class="inline-flex items-center gap-2 text-white text-sm font-semibold px-6 py-2 transition-colors"
+                style="background: var(--relay-primary); border-radius: var(--relay-radius);"
+                onmouseover="this.style.background='var(--relay-primary-hover)'"
+                onmouseout="this.style.background='var(--relay-primary)'">
                 ✓ Confirmer ce point relais
             </button>
+            {% endblock %}
         </div>
     </div>
+    {% endblock %}
 </div>

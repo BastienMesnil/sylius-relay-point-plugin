@@ -118,7 +118,10 @@ final class DpdProvider implements RelayPointProviderInterface
         return $points;
     }
 
-    /** @param array<int, array<string, string>> $raw */
+    /**
+     * @param array<int, array<string, string>> $raw
+     * @return OpeningHours[]
+     */
     private function parseOpeningHours(array $raw): array
     {
         $openingHours = [];

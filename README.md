@@ -14,7 +14,7 @@ Any carrier — French or international — can plug in by implementing a single
 
 - **Carrier-agnostic** — implement `RelayPointProviderInterface` to add any carrier without touching the plugin core
 - **Geocoding-agnostic** — switch between Addok, Nominatim, Google Maps, Photon, or your own backend via config
-- **Built-in providers** — Mondial Relay, Chronopost, Shop2Shop, Colissimo, InPost, DPD, DHL, Packeta, Colis Privé (skeleton)
+- **Built-in providers** — Mondial Relay, Chronopost, Shop2Shop, Colissimo, InPost, GLS, DPD, DHL, Packeta, PostNL, bpost (skeleton), Colis Privé (skeleton)
 - **Checkout UX** — Stimulus controller + Leaflet map, embeddable in any Sylius checkout template
 - **Session persistence** — selected relay point stored in session, readable server-side during checkout completion
 
@@ -167,7 +167,39 @@ keirontw_sylius_relay_point:
                 - packeta_czech_republic
                 - packeta_slovakia
                 - packeta_poland
+
+        post_nl:
+            enabled: true
+            # API key: https://developer.postnl.nl (business account required)
+            # Covers: NL, BE and more
+            api_key: '%env(POSTNL_API_KEY)%'
+            # PG=retail points + lockers (default), PA=lockers only, PG_EX=retail only
+            delivery_options: 'PG'
+            shipping_method_codes:
+                - postnl_netherlands
+                - postnl_belgium
+
+        bpost:
+            enabled: false  # See note below — no public API, requires bpost business agreement
+            api_key:  '%env(BPOST_API_KEY)%'
+            base_url: '%env(BPOST_API_BASE_URL)%'
+            shipping_method_codes:
+                - bpost_belgium
+
+        gls:
+            enabled: true
+            # Credentials provided by your GLS contact upon account setup
+            username: '%env(GLS_USERNAME)%'
+            password: '%env(GLS_PASSWORD)%'
+            # Base URL may differ per country — default covers most EU countries
+            # base_url: 'https://shipit.gls-group.eu/backend/rs/parcelshop'
+            shipping_method_codes:
+                - gls_france
+                - gls_germany
+                - gls_belgium
 ```
+
+> **Note — bpost parcel points:** bpost does not expose a public REST API for parcel point search. Access is granted only to verified business partners via the OSP portal (https://osp.bpost.be). Contact bpost at https://www.bpost.be/en/business to request credentials and endpoint documentation. The provider skeleton (`BpostProvider`) is ready and only needs the correct endpoint and field mapping.
 
 > **Note — Colis Privé relay points:** Colis Privé's label generation API (`WSCP.asmx`) is separate from their relay point search API. The WSDL URL and method name for relay point search must be confirmed with Colis Privé technical support before enabling this provider. The provider skeleton (`ColisPriveRelayProvider`) is ready and only needs the correct endpoint and field mapping.
 
@@ -175,11 +207,25 @@ keirontw_sylius_relay_point:
 
 ## Checkout integration
 
-### 1. Include the widget in your shipping step template
+### 1. Automatic Twig Hook (recommended)
+
+The plugin automatically registers itself into the `sylius_shop.checkout.select_shipping` hook via `PrependExtensionInterface`. No template change needed — the relay picker appears automatically when the customer's chosen shipping method matches one of your configured `shipping_method_codes`.
+
+The hook runs at priority 50 (between the shipping method form and the navigation button). Override the priority in your own `twig_hooks.yaml` if needed:
+
+```yaml
+sylius_twig_hooks:
+    hooks:
+        'sylius_shop.checkout.select_shipping':
+            relay_point_picker:
+                priority: 150   # move above the shipping form
+```
+
+### 1b. Manual embed (alternative)
+
+If you manage checkout templates yourself without Twig Hooks, include the widget directly:
 
 ```twig
-{# templates/checkout/shipping.html.twig (or via Sylius Twig Hook) #}
-
 {% include '@KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig' with {
     searchUrl:       path('keirontw_relay_point_shop_search'),
     geocodeUrl:      path('keirontw_relay_point_shop_geocode'),
@@ -202,21 +248,29 @@ The widget handles:
 
 ### 2. Register the Stimulus controller
 
-The plugin ships a Stimulus controller (`relay-point-picker`). Add it to your `assets/controllers.json`:
+Install the npm package:
+
+```bash
+npm install @keirontw/sylius-relay-point-plugin
+```
+
+Then add the controller entry to your app's `assets/controllers.json`:
 
 ```json
 {
-    "controllers": [
-        {
-            "name": "@keirontw/sylius-relay-point-plugin/relay-point-picker",
-            "enabled": true,
-            "fetch": "eager"
+    "controllers": {
+        "@keirontw/sylius-relay-point-plugin": {
+            "relay-point-picker": {
+                "enabled": true,
+                "fetch": "eager"
+            }
         }
-    ]
+    },
+    "entrypoints": []
 }
 ```
 
-Or copy `assets/shop/controllers/relay-point-picker_controller.js` directly into your project's `assets/controllers/` folder and import it manually.
+**Alternative (without npm):** copy `assets/shop/controllers/relay-point-picker_controller.js` into your project's `assets/controllers/` folder and import it manually in your entrypoint.
 
 ### 3. Handle the selection event
 
@@ -285,6 +339,69 @@ final class ApplyRelayPointSubscriber implements EventSubscriberInterface
         $this->storage->clear($order->getTokenValue());
     }
 }
+```
+
+---
+
+## Customising the widget
+
+### CSS variables (theming — no Twig change needed)
+
+Override the CSS custom properties in your stylesheet to match your design system. All defaults are defined on `.relay-picker`:
+
+```css
+.relay-picker {
+    --relay-primary:        #7c3aed;   /* accent / confirm button */
+    --relay-primary-hover:  #6d28d9;
+    --relay-primary-bg:     #f5f3ff;   /* selected-point panel background */
+    --relay-primary-border: #ddd6fe;   /* selected-point panel border */
+    --relay-radius:         0.375rem;  /* border-radius for panels and inputs */
+    --relay-border:         #d1d5db;   /* general border color */
+}
+```
+
+### Twig blocks (structural overrides — via `{% embed %}`)
+
+The widget exposes named blocks so you can override individual sections without duplicating the whole template. Use `{% embed %}` instead of `{% include %}`:
+
+```twig
+{% embed '@KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig' with {
+    searchUrl:   path('keirontw_relay_point_shop_search'),
+    geocodeUrl:  path('keirontw_relay_point_shop_geocode'),
+    selectUrl:   path('keirontw_relay_point_shop_select'),
+    methodCodes: active_relay_codes,
+    cartToken:   order.tokenValue,
+} %}
+    {# Replace only the confirm button with your own component #}
+    {% block relay_confirm_button %}
+        <button type="button"
+            data-action="click->relay-point-picker#confirmSelection"
+            class="btn btn-primary w-full">
+            Valider ce point relais
+        </button>
+    {% endblock %}
+{% endembed %}
+```
+
+Available blocks:
+
+| Block | Contains |
+|---|---|
+| `relay_styles` | `<style>` tag with CSS variable defaults |
+| `relay_search_bar` | Search input + submit button + filter dropdown |
+| `relay_filter` | Carrier filter dropdown only |
+| `relay_grid` | Two-column map + list layout |
+| `relay_list` | Scrollable relay point list |
+| `relay_map` | Leaflet map |
+| `relay_selected_summary` | Selected point detail panel |
+| `relay_confirm_button` | The confirm CTA inside the summary |
+
+### Full template override
+
+Copy the template into your project's bundle override directory — Symfony will use yours instead:
+
+```
+templates/bundles/KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig
 ```
 
 ---

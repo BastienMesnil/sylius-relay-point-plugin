@@ -122,6 +122,7 @@ final class ChronopostProvider implements RelayPointProviderInterface
         return $points;
     }
 
+    /** @return OpeningHours[] */
     private function parseOpeningHours(object $point): array
     {
         if (!isset($point->listeHoraireOuverture)) {

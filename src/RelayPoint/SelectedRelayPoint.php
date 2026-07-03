@@ -22,6 +22,7 @@ final class SelectedRelayPoint
         public readonly string $carrierCode,
         public readonly string $shippingMethodCode,
         public readonly ?int $distanceInMeters = null,
+        /** @var list<array<string, string>> $openingHours */
         public readonly array $openingHours = [],
     ) {
     }

@@ -126,10 +126,11 @@ final class InPostProvider implements RelayPointProviderInterface
 
         $openingHours = [];
         foreach ($dayLabels as $key => $label) {
-            if (!isset($raw[$key]) || !is_array($raw[$key])) {
+            if (!is_array($raw[$key] ?? null)) {
                 continue;
             }
 
+            /** @var array<string, mixed> $slot */
             $slot = $raw[$key];
             $hours = (string) ($slot['from'] ?? '') . '-' . (string) ($slot['to'] ?? '');
 

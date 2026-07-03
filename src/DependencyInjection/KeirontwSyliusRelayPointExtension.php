@@ -16,6 +16,9 @@ use Keirontw\SyliusRelayPointPlugin\Provider\Dhl\DhlProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\Dpd\DpdProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\InPost\InPostProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\MondialRelay\MondialRelayProvider;
+use Keirontw\SyliusRelayPointPlugin\Provider\Bpost\BpostProvider;
+use Keirontw\SyliusRelayPointPlugin\Provider\Gls\GlsProvider;
+use Keirontw\SyliusRelayPointPlugin\Provider\PostNl\PostNlProvider;
 use Keirontw\SyliusRelayPointPlugin\Provider\Packeta\PacketaProvider;
 use Sylius\Bundle\CoreBundle\DependencyInjection\PrependDoctrineMigrationsTrait;
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Extension\AbstractResourceExtension;
@@ -31,7 +34,9 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
 
     public function load(array $configs, ContainerBuilder $container): void
     {
-        $config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
+        $configuration = $this->getConfiguration($configs, $container);
+        \assert($configuration !== null);
+        $config = $this->processConfiguration($configuration, $configs);
 
         $geocoding = $config['geocoding'];
 
@@ -49,8 +54,10 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
 
         $this->wireGeocodingProvider($container, $geocoding['provider'], $geocoding);
         $this->wireCarrierProviders($container, $config['providers']);
+        $this->collectRelayMethodCodes($container, $config['providers']);
     }
 
+    /** @param array<string, array<string, mixed>> $providers */
     private function wireCarrierProviders(ContainerBuilder $container, array $providers): void
     {
         $mondialRelay = $providers['mondial_relay'];
@@ -164,8 +171,65 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
                 ->addTag('keirontw_sylius_relay_point.relay_point_provider')
                 ->setPublic(false);
         }
+
+        $postNl = $providers['post_nl'];
+
+        if ($postNl['enabled'] ?? false) {
+            $container->register('keirontw.relay_point.post_nl_provider', PostNlProvider::class)
+                ->addArgument(new Reference('http_client'))
+                ->addArgument(new Reference('logger'))
+                ->addArgument($postNl['shipping_method_codes'])
+                ->addArgument($postNl['api_key'])
+                ->addArgument($postNl['delivery_options'])
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
+        }
+
+        $bpost = $providers['bpost'];
+
+        if ($bpost['enabled'] ?? false) {
+            $container->register('keirontw.relay_point.bpost_provider', BpostProvider::class)
+                ->addArgument(new Reference('http_client'))
+                ->addArgument(new Reference('logger'))
+                ->addArgument($bpost['shipping_method_codes'])
+                ->addArgument($bpost['api_key'])
+                ->addArgument($bpost['base_url'])
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
+        }
+
+        $gls = $providers['gls'];
+
+        if ($gls['enabled'] ?? false) {
+            $container->register('keirontw.relay_point.gls_provider', GlsProvider::class)
+                ->addArgument(new Reference('http_client'))
+                ->addArgument(new Reference('logger'))
+                ->addArgument($gls['shipping_method_codes'])
+                ->addArgument($gls['username'])
+                ->addArgument($gls['password'])
+                ->addArgument($gls['base_url'])
+                ->addTag('keirontw_sylius_relay_point.relay_point_provider')
+                ->setPublic(false);
+        }
     }
 
+    /** @param array<string, array<string, mixed>> $providers */
+    private function collectRelayMethodCodes(ContainerBuilder $container, array $providers): void
+    {
+        $codes = [];
+
+        foreach ($providers as $providerConfig) {
+            if (($providerConfig['enabled'] ?? false) && isset($providerConfig['shipping_method_codes'])) {
+                foreach ($providerConfig['shipping_method_codes'] as $code) {
+                    $codes[] = $code;
+                }
+            }
+        }
+
+        $container->setParameter('keirontw_sylius_relay_point.relay_method_codes', array_values(array_unique($codes)));
+    }
+
+    /** @param array<string, mixed> $geocoding */
     private function wireGeocodingProvider(ContainerBuilder $container, string $provider, array $geocoding): void
     {
         if ($provider === 'custom') {
@@ -185,6 +249,7 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
             'nominatim' => NominatimProvider::class,
             'google_maps' => GoogleMapsProvider::class,
             'photon' => PhotonProvider::class,
+            default => throw new \InvalidArgumentException(sprintf('Unknown geocoding provider "%s".', $provider)),
         };
 
         $container->setAlias(GeocodingProviderInterface::class, $serviceId)->setPublic(true);
@@ -193,6 +258,19 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
     public function prepend(ContainerBuilder $container): void
     {
         $this->prependDoctrineMigrations($container);
+
+        if ($container->hasExtension('sylius_twig_hooks')) {
+            $container->prependExtensionConfig('sylius_twig_hooks', [
+                'hooks' => [
+                    'sylius_shop.checkout.select_shipping' => [
+                        'relay_point_picker' => [
+                            'template' => '@KeirontwSyliusRelayPointPlugin/shop/hook/relay_picker.html.twig',
+                            'priority' => 50,
+                        ],
+                    ],
+                ],
+            ]);
+        }
     }
 
     protected function getMigrationsNamespace(): string
@@ -205,6 +283,7 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
         return '@KeirontwSyliusRelayPointPlugin/src/Migrations';
     }
 
+    /** @return list<string> */
     protected function getNamespacesOfMigrationsExecutedBefore(): array
     {
         return [
