@@ -1,5 +1,6 @@
 /vendor/
 /var/
+/tests/var/
 /node_modules/
 /package-lock.json
 /yarn.lock
