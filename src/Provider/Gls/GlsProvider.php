@@ -63,9 +63,7 @@ final class GlsProvider implements RelayPointProviderInterface
             'Distance' => (int) round(($criteria->radiusInMeters ?? 10000) / 1000),
         ];
 
-        if ($criteria->limit !== null) {
-            $body['MaxNumberOfShops'] = $criteria->limit;
-        }
+        $body['MaxNumberOfShops'] = $criteria->limit;
 
         return $this->request($this->baseUrl . '/distance', $body);
     }

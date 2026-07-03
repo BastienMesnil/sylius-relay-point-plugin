@@ -42,7 +42,7 @@ final class SelectedRelayPoint
             carrierCode: (string) ($data['carrierCode'] ?? ''),
             shippingMethodCode: (string) ($data['shippingMethodCode'] ?? ''),
             distanceInMeters: isset($data['distanceInMeters']) ? (int) $data['distanceInMeters'] : null,
-            openingHours: (array) ($data['openingHours'] ?? []),
+            openingHours: array_values((array) ($data['openingHours'] ?? [])),
         );
     }
 
