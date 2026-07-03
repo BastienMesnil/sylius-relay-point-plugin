@@ -1,7 +1,7 @@
 {
     "name": "keirontw/sylius-relay-point-plugin",
     "type": "sylius-plugin",
-    "description": "Carrier-agnostic relay point (point relais) selection plugin for Sylius 2.x checkout",
+    "description": "Carrier-agnostic relay point (point relais) selection plugin for Sylius 1.9+ checkout",
     "keywords": [
         "sylius",
         "sylius-plugin",
@@ -16,10 +16,10 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.1",
         "ext-soap": "*",
-        "sylius/sylius": "^2.0",
-        "symfony/http-client": "^6.4 || ^7.4"
+        "sylius/sylius": "^1.9",
+        "symfony/http-client": "^5.4 || ^6.0"
     },
     "require-dev": {
         "behat/behat": "^3.16",
@@ -41,13 +41,12 @@
         "phpunit/phpunit": "^10.5",
         "sylius-labs/coding-standard": "^4.4",
         "sylius-labs/suite-tags-extension": "~0.2",
-        "sylius/test-application": "^2.0.0@alpha",
-        "symfony/browser-kit": "^6.4 || ^7.4",
-        "symfony/debug-bundle": "^6.4 || ^7.4",
-        "symfony/dotenv": "^6.4 || ^7.4",
-        "symfony/intl": "^6.4 || ^7.4",
-        "symfony/runtime": "^6.4 || ^7.4",
-        "symfony/web-profiler-bundle": "^6.4 || ^7.4",
+        "symfony/browser-kit": "^5.4 || ^6.0",
+        "symfony/debug-bundle": "^5.4 || ^6.0",
+        "symfony/dotenv": "^5.4 || ^6.0",
+        "symfony/intl": "^5.4 || ^6.0",
+        "symfony/runtime": "^5.4 || ^6.0",
+        "symfony/web-profiler-bundle": "^5.4 || ^6.0",
         "symfony/webpack-encore-bundle": "^2.2"
     },
     "config": {
@@ -62,12 +61,11 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "2.0-dev"
+            "dev-1.x": "1.0-dev"
         },
         "symfony": {
-            "require": "^7.4"
+            "require": "^5.4 || ^6.0"
         },
-        "public-dir": "vendor/sylius/test-application/public"
     },
     "autoload": {
         "psr-4": {
@@ -83,19 +81,6 @@
         }
     },
     "scripts": {
-        "database-reset": [
-            "vendor/bin/console doctrine:database:drop --force --if-exists",
-            "vendor/bin/console doctrine:database:create",
-            "vendor/bin/console doctrine:migration:migrate -n",
-            "vendor/bin/console sylius:fixtures:load -n"
-        ],
-        "frontend-clear": [
-            "cd vendor/sylius/test-application && yarn install && yarn build",
-            "vendor/bin/console assets:install"
-        ],
-        "test-app-init": [
-            "@database-reset",
-            "@frontend-clear"
-        ]
+        "test": "vendor/bin/phpunit"
     }
 }

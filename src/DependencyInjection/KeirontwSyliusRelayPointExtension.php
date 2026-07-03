@@ -264,13 +264,17 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
     {
         $this->prependDoctrineMigrations($container);
 
-        if ($container->hasExtension('sylius_twig_hooks')) {
-            $container->prependExtensionConfig('sylius_twig_hooks', [
-                'hooks' => [
-                    'sylius_shop.checkout.select_shipping' => [
-                        'relay_point_picker' => [
-                            'template' => '@KeirontwSyliusRelayPointPlugin/shop/hook/relay_picker.html.twig',
-                            'priority' => 50,
+        // Sylius 1.x: inject via SyliusUiBundle template events
+        if ($container->hasExtension('sylius_ui')) {
+            $container->prependExtensionConfig('sylius_ui', [
+                'events' => [
+                    'sylius.shop.checkout.select_shipping.before_navigation' => [
+                        'blocks' => [
+                            'relay_point_picker' => [
+                                'template' => '@KeirontwSyliusRelayPointPlugin/shop/hook/relay_picker_1x.html.twig',
+                                'priority' => 10,
+                                'enabled' => true,
+                            ],
                         ],
                     ],
                 ],

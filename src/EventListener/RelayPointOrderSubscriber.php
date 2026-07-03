@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace Keirontw\SyliusRelayPointPlugin\EventListener;
 
 use Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSessionStorage;
+use Sylius\Bundle\ResourceBundle\Event\ResourceControllerEvent;
 use Sylius\Component\Core\Model\AddressInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\Workflow\Event\CompletedEvent;
-use Webmozart\Assert\Assert;
 
 /**
  * Copies the relay point chosen by the customer (stored in session) onto the
  * shipping address of the order when the checkout is completed.
+ *
+ * Listens on the Sylius 1.x winzou state-machine event sylius.order.pre_complete.
  *
  * This subscriber is optional. It can be disabled via bundle config:
  *
@@ -31,16 +32,19 @@ final class RelayPointOrderSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            'workflow.sylius_order_checkout.completed.complete' => 'onCheckoutComplete',
+            'sylius.order.pre_complete' => 'onPreComplete',
         ];
     }
 
-    public function onCheckoutComplete(CompletedEvent $event): void
+    public function onPreComplete(ResourceControllerEvent $event): void
     {
         $order = $event->getSubject();
-        Assert::isInstanceOf($order, OrderInterface::class);
 
-        $relayPoint = $this->sessionStorage->get($order->getTokenValue());
+        if (!$order instanceof OrderInterface) {
+            return;
+        }
+
+        $relayPoint = $this->sessionStorage->get((string) $order->getTokenValue());
 
         if ($relayPoint === null) {
             return;
@@ -58,6 +62,6 @@ final class RelayPointOrderSubscriber implements EventSubscriberInterface
         $address->setCity($relayPoint->city);
         $address->setCountryCode($relayPoint->countryCode);
 
-        $this->sessionStorage->clear($order->getTokenValue());
+        $this->sessionStorage->clear((string) $order->getTokenValue());
     }
 }
