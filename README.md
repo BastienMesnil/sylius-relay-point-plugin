@@ -10,6 +10,14 @@ Any carrier — French or international — plugs in by implementing a single PH
 
 ---
 
+## Screenshots
+
+| List + map | Point selected | Checkout context |
+|:---:|:---:|:---:|
+| ![Widget list and map view](docs/screenshots/widget-list-map.png) | ![Point selected with opening hours](docs/screenshots/point-selected.png) | ![Full checkout page with widget](docs/screenshots/checkout-context.png) |
+
+---
+
 ## Features
 
 - **Carrier-agnostic** — implement `RelayPointProviderInterface` to add any carrier without touching the plugin core
