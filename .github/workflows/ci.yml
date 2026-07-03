@@ -54,6 +54,27 @@ jobs:
             -   name: Run PHPStan
                 run: vendor/bin/phpstan analyse src --level=8
 
+    behat:
+        name: Behat integration
+        runs-on: ubuntu-latest
+
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: '8.3'
+                    extensions: soap, intl
+                    coverage: none
+
+            -   name: Install dependencies
+                run: composer install --prefer-dist --no-progress --no-interaction
+
+            -   name: Run Behat
+                run: vendor/bin/behat --config behat.yml.dist --no-interaction --format=progress
+
     assets:
         name: Assets (npm pack dry-run)
         runs-on: ubuntu-latest

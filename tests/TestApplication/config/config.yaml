@@ -1,19 +1,14 @@
 imports:
     - { resource: "@KeirontwSyliusRelayPointPlugin/config/config.yaml" }
-    - { resource: "services_test.php" }
+    - { resource: "@KeirontwSyliusRelayPointPlugin/tests/Behat/Resources/services.xml" }
+
+framework:
+    secret: 'test-secret'
+    test: true
+    session:
+        handler_id: session.handler.native_file
+        storage_factory_id: session.storage.factory.mock_file
 
 twig:
     paths:
-        '%kernel.project_dir%/../../../tests/TestApplication/templates': ~
-
-# Remove if you do not need to extend entities
-doctrine:
-    orm:
-        entity_managers:
-            default:
-                mappings:
-                    TestApplication:
-                        is_bundle: false
-                        type: attribute
-                        dir: '%kernel.project_dir%/../../../tests/TestApplication/src/Entity'
-                        prefix: Tests\Keirontw\SyliusRelayPointPlugin
+        '%kernel.project_dir%/tests/TestApplication/templates': ~

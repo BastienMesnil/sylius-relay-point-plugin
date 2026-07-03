@@ -1,0 +1,23 @@
+imports:
+    - tests/Behat/Resources/suites.yml
+
+default:
+    extensions:
+        FriendsOfBehat\SymfonyExtension:
+            bootstrap: vendor/autoload.php
+            kernel:
+                class: Tests\Keirontw\SyliusRelayPointPlugin\Kernel
+                path: tests/TestApplication/src/Kernel.php
+                environment: test
+                debug: true
+
+        Behat\MinkExtension\ServiceContainer\MinkExtension:
+            base_url: "http://localhost/"
+            default_session: symfony
+            sessions:
+                symfony:
+                    symfony: ~
+
+        FriendsOfBehat\SuiteSettingsExtension:
+            paths:
+                - features

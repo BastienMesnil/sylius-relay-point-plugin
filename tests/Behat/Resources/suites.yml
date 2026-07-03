@@ -1,1 +1,7 @@
-# Put your Behat suites definitions here
+default:
+    suites:
+        relay_point_api:
+            contexts:
+                - Tests\Keirontw\SyliusRelayPointPlugin\Behat\Context\Ui\Shop\RelayPointContext
+            filters:
+                tags: "@relay_point"
