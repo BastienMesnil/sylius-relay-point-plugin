@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keirontw\SyliusRelayPointPlugin\DependencyInjection;
 
+use Keirontw\SyliusRelayPointPlugin\EventListener\RelayPointOrderSubscriber;
 use Keirontw\SyliusRelayPointPlugin\Geocoding\AddokProvider;
 use Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface;
 use Keirontw\SyliusRelayPointPlugin\Geocoding\GoogleMapsProvider;
@@ -55,6 +56,10 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
         $this->wireGeocodingProvider($container, $geocoding['provider'], $geocoding);
         $this->wireCarrierProviders($container, $config['providers']);
         $this->collectRelayMethodCodes($container, $config['providers']);
+
+        if (!($config['apply_relay_point_to_order'] ?? true)) {
+            $container->removeDefinition(RelayPointOrderSubscriber::class);
+        }
     }
 
     /** @param array<string, array<string, mixed>> $providers */

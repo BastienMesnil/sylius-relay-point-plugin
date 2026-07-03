@@ -16,6 +16,10 @@ import { Controller } from '@hotwired/stimulus';
  * Events dispatched:
  *   relay-point-picker:selected  — detail: { point, shippingMethodCode }
  *   relay-point-picker:cleared   — dispatched when the selection is reset
+ *   relay-point-picker:error     — detail: { message } — dispatched on any error
+ *
+ * Optional targets:
+ *   error  (data-relay-point-picker-target="error") — element where error messages are displayed
  *
  * The host app listens to relay-point-picker:selected to persist the selection
  * (e.g. POST to a session endpoint, update a hidden form field, etc.).
@@ -29,6 +33,7 @@ export default class extends Controller {
         'pointName', 'pointAddress', 'pointCarrier', 'pointDistance',
         'selectedPointInfo',
         'openingHoursContainer',
+        'error',
     ];
 
     static values = {
@@ -95,7 +100,18 @@ export default class extends Controller {
     async handleSearch(event) {
         if (event) event.preventDefault();
         const query = this.hasSearchInputTarget ? this.searchInputTarget.value.trim() : '';
-        if (!query) return;
+        if (!query) {
+            if (this.hasSearchInputTarget) {
+                this.searchInputTarget.focus();
+                this.searchInputTarget.classList.add('relay-picker--input-error');
+                this.searchInputTarget.addEventListener(
+                    'input',
+                    () => this.searchInputTarget.classList.remove('relay-picker--input-error'),
+                    { once: true },
+                );
+            }
+            return;
+        }
         await this._geocodeAndLoad(query);
     }
 
@@ -169,10 +185,12 @@ export default class extends Controller {
                     }),
                 });
                 if (!res.ok) {
-                    console.error('[relay-point-picker] select endpoint returned', res.status);
+                    this._showError(`Erreur lors de la confirmation du point relais (HTTP ${res.status}). Veuillez réessayer.`);
+                    return; // Do not close the widget or dispatch confirmed
                 }
             } catch (e) {
-                console.error('[relay-point-picker] persist error', e);
+                this._showError('Impossible de confirmer le point relais. Vérifiez votre connexion et réessayez.');
+                return; // Do not close the widget or dispatch confirmed
             }
         }
 
@@ -183,6 +201,47 @@ export default class extends Controller {
     }
 
     // ── Private ──────────────────────────────────────────────────────────────
+
+    /**
+     * Display an error message to the user.
+     * — If a target `data-relay-point-picker-target="error"` exists, update its textContent and unhide it.
+     * — Always dispatch `relay-point-picker:error` with `{ message }` in the detail.
+     * — Fallback to console.warn when no error target is present.
+     */
+    _showError(message) {
+        if (this.hasErrorTarget) {
+            this.errorTarget.textContent = message;
+            this.errorTarget.classList.remove('hidden');
+        } else {
+            console.warn('[relay-point-picker]', message);
+        }
+
+        this.element.dispatchEvent(new CustomEvent('relay-point-picker:error', {
+            bubbles: true,
+            detail: { message },
+        }));
+    }
+
+    /** Hide the error target (call after a successful operation). */
+    _clearError() {
+        if (this.hasErrorTarget) {
+            this.errorTarget.textContent = '';
+            this.errorTarget.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Toggle a loading state on the widget.
+     * Adds/removes the `relay-picker--loading` class on `this.element` and
+     * disables/enables the search input so the user cannot trigger a second
+     * search while one is in progress.
+     */
+    _showLoading(bool) {
+        this.element.classList.toggle('relay-picker--loading', bool);
+        if (this.hasSearchInputTarget) {
+            this.searchInputTarget.disabled = bool;
+        }
+    }
 
     _loadLeafletAndInit() {
         if (typeof L !== 'undefined') { this._initMap(); return; }
@@ -195,6 +254,7 @@ export default class extends Controller {
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
         script.onload = () => this._initMap();
+        script.onerror = () => this._showError('Impossible de charger la carte. Veuillez réessayer.');
         document.head.appendChild(script);
     }
 
@@ -218,11 +278,35 @@ export default class extends Controller {
     async _geocodeAndLoad(query) {
         if (!query) return;
 
+        this._showLoading(true);
+        this._clearError();
+
         try {
-            const res = await fetch(`${this.geocodeUrlValue}?q=${encodeURIComponent(query)}`);
-            if (!res.ok) return;
-            const data = await res.json();
-            if (!data) return;
+            let res;
+            try {
+                res = await fetch(`${this.geocodeUrlValue}?q=${encodeURIComponent(query)}`);
+            } catch (networkError) {
+                this._showError('Impossible de joindre le serveur de géocodage. Vérifiez votre connexion.');
+                return;
+            }
+
+            if (res.status === 204 || !res.ok) {
+                this._showError('Adresse introuvable. Essayez avec un code postal ou une ville différente.');
+                return;
+            }
+
+            let data;
+            try {
+                data = await res.json();
+            } catch {
+                this._showError('Réponse invalide du serveur de géocodage.');
+                return;
+            }
+
+            if (!data || (!data.latitude && !data.longitude)) {
+                this._showError('Adresse introuvable. Essayez avec un code postal ou une ville différente.');
+                return;
+            }
 
             this.currentCoords = [data.latitude, data.longitude];
             this._placeSearchMarker(this.currentCoords);
@@ -234,8 +318,8 @@ export default class extends Controller {
                 city: data.city,
                 countryCode: data.countryCode,
             });
-        } catch (e) {
-            console.error('[relay-point-picker] geocode error', e);
+        } finally {
+            this._showLoading(false);
         }
     }
 
@@ -252,6 +336,8 @@ export default class extends Controller {
     async _loadPoints(addressData) {
         if (!this.methodCodesValue.length) return;
 
+        let errorCount = 0;
+
         const fetches = this.methodCodesValue.map(code => {
             const params = new URLSearchParams({ shipping_method_code: code, limit: '10' });
             if (addressData.latitude) params.set('latitude', addressData.latitude);
@@ -260,12 +346,26 @@ export default class extends Controller {
             if (addressData.city) params.set('city', addressData.city);
             if (addressData.countryCode) params.set('country_code', addressData.countryCode);
             return fetch(`${this.searchUrlValue}?${params}`)
-                .then(r => r.ok ? r.json() : [])
-                .catch(() => []);
+                .then(r => {
+                    if (!r.ok) { errorCount++; return []; }
+                    return r.json().catch(() => { errorCount++; return []; });
+                })
+                .catch(() => { errorCount++; return []; });
         });
 
         const results = await Promise.all(fetches);
         this.points = results.flat();
+
+        if (errorCount > 0 && this.points.length === 0) {
+            // All fetches failed — distinct from "no results"
+            this._showError('Erreur lors de la récupération des points relais. Veuillez réessayer.');
+        } else if (errorCount > 0) {
+            // Partial failure but we still got some results — soft warning via event only
+            this.element.dispatchEvent(new CustomEvent('relay-point-picker:error', {
+                bubbles: true,
+                detail: { message: `${errorCount} transporteur(s) indisponible(s). Les résultats peuvent être incomplets.` },
+            }));
+        }
 
         this._buildCarrierColorMap();
         this._buildCarrierFilter();

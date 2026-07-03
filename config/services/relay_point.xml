@@ -45,5 +45,10 @@
             </call>
             <tag name="controller.service_arguments" />
         </service>
+
+        <service id="Keirontw\SyliusRelayPointPlugin\EventListener\RelayPointOrderSubscriber">
+            <argument type="service" id="Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSessionStorage" />
+            <tag name="kernel.event_subscriber" />
+        </service>
     </services>
 </container>

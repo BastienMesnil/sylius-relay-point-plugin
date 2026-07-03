@@ -19,6 +19,10 @@ final class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
+                ->booleanNode('apply_relay_point_to_order')
+                    ->defaultTrue()
+                    ->info('When true (default), the relay point chosen by the customer is automatically copied onto the shipping address when the checkout is completed. Set to false to handle this yourself.')
+                ->end()
                 ->arrayNode('geocoding')
                     ->addDefaultsIfNotSet()
                     ->children()
