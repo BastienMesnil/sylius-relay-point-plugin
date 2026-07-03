@@ -65,7 +65,7 @@
         },
         "symfony": {
             "require": "^5.4 || ^6.0"
-        },
+        }
     },
     "autoload": {
         "psr-4": {
