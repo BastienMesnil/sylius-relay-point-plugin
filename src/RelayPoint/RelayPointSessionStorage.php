@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  *
  * The session key is scoped per cart token so concurrent browser tabs don't clash.
  */
-final class RelayPointSessionStorage
+final class RelayPointSessionStorage implements RelayPointSessionStorageInterface
 {
     private const SESSION_KEY = 'keirontw_relay_point.selected';
 

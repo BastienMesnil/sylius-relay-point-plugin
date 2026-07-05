@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keirontw\SyliusRelayPointPlugin\EventListener;
 
-use Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSessionStorage;
+use Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSessionStorageInterface;
 use Sylius\Bundle\ResourceBundle\Event\ResourceControllerEvent;
 use Sylius\Component\Core\Model\AddressInterface;
 use Sylius\Component\Core\Model\OrderInterface;
@@ -24,7 +24,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class RelayPointOrderSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly RelayPointSessionStorage $sessionStorage,
+        private readonly RelayPointSessionStorageInterface $sessionStorage,
     ) {
     }
 
