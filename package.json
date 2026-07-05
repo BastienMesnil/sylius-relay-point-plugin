@@ -1,7 +1,7 @@
 {
     "name": "@keirontw/sylius-relay-point-plugin",
-    "version": "1.0.0",
-    "description": "Carrier-agnostic relay point selection widget for Sylius 2.x checkout",
+    "version": "2.0.0",
+    "description": "Carrier-agnostic relay point selection widget for Sylius checkout",
     "license": "MIT",
     "repository": {
         "type": "git",
