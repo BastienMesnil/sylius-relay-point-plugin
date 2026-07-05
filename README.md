@@ -1,10 +1,13 @@
 # Sylius Relay Point Plugin
 
-[![CI](https://github.com/BastienMesnil/sylius-relay-point-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/BastienMesnil/sylius-relay-point-plugin/actions/workflows/ci.yml)
-[![PHP](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://www.php.net)
+[![CI](https://github.com/BastienMesnil/sylius-relay-point-plugin/actions/workflows/ci.yml/badge.svg?branch=1.x)](https://github.com/BastienMesnil/sylius-relay-point-plugin/actions/workflows/ci.yml)
+[![PHP](https://img.shields.io/badge/PHP-8.1%2B-blue)](https://www.php.net)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Carrier-agnostic relay point ("point relais") selection for the Sylius 2.x checkout.
+> **You are on the `1.x` branch — Sylius 1.9+ / Symfony 5.4–6.x.**
+> For Sylius 2.x see the [`main` branch](https://github.com/BastienMesnil/sylius-relay-point-plugin/tree/main).
+
+Carrier-agnostic relay point ("point relais") selection for the Sylius 1.9+ checkout.
 
 Any carrier — French or international — plugs in by implementing a single PHP interface. Geocoding is equally swappable: Addok (French BAN, default, no API key), Nominatim, Google Maps, or Photon.
 
@@ -23,18 +26,18 @@ Any carrier — French or international — plugs in by implementing a single PH
 - **Carrier-agnostic** — implement `RelayPointProviderInterface` to add any carrier without touching the plugin core
 - **Geocoding-agnostic** — switch between Addok, Nominatim, Google Maps, Photon, or your own backend via config
 - **Built-in providers** — Mondial Relay, Chronopost, Shop2Shop, Colissimo, InPost, GLS, DPD, DHL, Packeta, PostNL, bpost (skeleton), Colis Privé (skeleton)
-- **Auto-injected checkout hook** — appears automatically in `sylius_shop.checkout.select_shipping` via Twig Hooks, no template edit required
-- **Checkout UX** — Stimulus controller + Leaflet map, embeddable in any Sylius checkout template
+- **Auto-injected checkout block** — appears automatically in `sylius.shop.checkout.select_shipping.before_navigation` via `SyliusUiBundle`, no template edit required
+- **Checkout UX** — Stimulus controller + Leaflet map, embeddable in any Sylius 1.x checkout template
 - **Session persistence** — selected relay point stored in session, readable server-side during checkout completion
-- **Built-in order subscriber** — optional subscriber copies the relay point into the Sylius shipping address at checkout completion
+- **Built-in order subscriber** — optional subscriber copies the relay point into the Sylius shipping address on `sylius.order.pre_complete`
 
 ---
 
 ## Requirements
 
-- PHP 8.2+
-- Sylius 2.0+
-- Symfony 7.4+
+- PHP 8.1+
+- Sylius 1.9+
+- Symfony 5.4 or 6.x
 - `ext-soap` (for SOAP-based carriers: Mondial Relay, Chronopost, Colissimo, Colis Privé)
 - `symfony/http-client` (for REST-based providers: InPost, GLS, DPD, DHL, Packeta, PostNL)
 
@@ -43,7 +46,7 @@ Any carrier — French or international — plugs in by implementing a single PH
 ## Installation
 
 ```bash
-composer require keirontw/sylius-relay-point-plugin
+composer require keirontw/sylius-relay-point-plugin:"^1.0"
 ```
 
 Register the plugin in `config/bundles.php`:
@@ -55,10 +58,10 @@ return [
 ];
 ```
 
-Import plugin routes in `config/routes.yaml`:
+Import plugin routes in `config/routes/keirontw_relay_point.yaml`:
 
 ```yaml
-keirontw_sylius_relay_point_shop:
+keirontw_relay_point_shop:
     resource: "@KeirontwSyliusRelayPointPlugin/config/routes/shop.yaml"
 ```
 
@@ -136,124 +139,105 @@ keirontw_sylius_relay_point:
 
         inpost:
             enabled: true
-            # Country-specific endpoints:
-            #   France:  https://api.inpost.fr/v1/points
-            #   Poland:  https://api-pl-points.easypack24.net/v1/points
-            #   UK:      https://api.inpost.co.uk/v1/points
             base_url: 'https://api.inpost.fr/v1/points'
             shipping_method_codes:
                 - inpost_france
 
         dpd:
             enabled: true
-            # API key: https://developer.dpd.com (free, covers all EU countries)
             api_key: '%env(DPD_API_KEY)%'
             shipping_method_codes:
                 - dpd_pickup_france
-                - dpd_pickup_germany
-                - dpd_pickup_belgium
 
         dhl:
             enabled: true
-            # API key: https://developer.dhl.com (free)
             api_key: '%env(DHL_API_KEY)%'
-            # parcel:pick-up     → DHL ServicePoints
-            # parcel:drop-off-easy → DHL Packstations (Germany)
             service_type: 'parcel:pick-up'
             shipping_method_codes:
                 - dhl_servicepoint_france
-                - dhl_servicepoint_germany
 
         packeta:
             enabled: true
-            # API key: https://client.packeta.com (free for merchants)
-            # Covers: CZ, SK, PL, HU, RO, DE, AT, FR, IT, ES, BE and more
             api_key: '%env(PACKETA_API_KEY)%'
             shipping_method_codes:
                 - packeta_czech_republic
-                - packeta_slovakia
-                - packeta_poland
 
         post_nl:
             enabled: true
-            # API key: https://developer.postnl.nl (business account required)
-            # Covers: NL, BE and more
             api_key: '%env(POSTNL_API_KEY)%'
-            # PG=retail points + lockers (default), PA=lockers only, PG_EX=retail only
             delivery_options: 'PG'
             shipping_method_codes:
                 - postnl_netherlands
-                - postnl_belgium
 
         gls:
             enabled: true
-            # Credentials provided by your GLS contact upon account setup
             username: '%env(GLS_USERNAME)%'
             password: '%env(GLS_PASSWORD)%'
-            # base_url: 'https://shipit.gls-group.eu/backend/rs/parcelshop'  # default
             shipping_method_codes:
                 - gls_france
-                - gls_germany
-                - gls_belgium
 
         bpost:
-            enabled: false   # See note — no public API, requires bpost business agreement
+            enabled: false
             api_key:  '%env(BPOST_API_KEY)%'
             base_url: '%env(BPOST_API_BASE_URL)%'
             shipping_method_codes:
                 - bpost_belgium
 
         colis_prive:
-            enabled: false   # See note — relay point WSDL must be confirmed with Colis Privé
+            enabled: false
             login:    '%env(COLIS_PRIVE_LOGIN)%'
             password: '%env(COLIS_PRIVE_PASSWORD)%'
             shipping_method_codes:
                 - colis_prive_relay
 ```
 
-> **bpost:** bpost does not expose a public API for parcel point search. Access requires a verified business partner agreement via the OSP portal. Contact bpost at https://www.bpost.be/en/business. The `BpostProvider` skeleton is ready and only needs the correct endpoint and field mapping once credentials are obtained.
+> **bpost:** bpost does not expose a public API for parcel point search. Access requires a verified business partner agreement. The `BpostProvider` skeleton is ready.
 
-> **Colis Privé:** the relay point search WSDL URL and method name must be confirmed with Colis Privé technical support before enabling this provider. The `ColisPriveRelayProvider` skeleton is ready.
+> **Colis Privé:** the relay point search WSDL URL must be confirmed with Colis Privé technical support. The `ColisPriveRelayProvider` skeleton is ready.
 
 ---
 
 ## Checkout integration
 
-### Automatic Twig Hook (recommended)
+### Automatic template event (recommended)
 
-The plugin auto-registers itself in the `sylius_shop.checkout.select_shipping` hook via `PrependExtensionInterface`. No template changes are required — the widget appears automatically when the customer selects a shipping method whose code is listed in `shipping_method_codes`.
+The plugin auto-registers itself in the `sylius.shop.checkout.select_shipping.before_navigation` event via `PrependExtensionInterface`. No template changes are required — the widget appears automatically when the customer selects a shipping method whose code is listed in `shipping_method_codes`.
 
-Override the hook priority if needed:
+The block is injected with priority 10. Override if needed:
 
 ```yaml
-# config/packages/sylius_twig_hooks.yaml
-sylius_twig_hooks:
-    hooks:
-        'sylius_shop.checkout.select_shipping':
-            relay_point_picker:
-                priority: 150   # move above the form
+# config/packages/sylius_ui.yaml
+sylius_ui:
+    events:
+        sylius.shop.checkout.select_shipping.before_navigation:
+            blocks:
+                relay_point_picker:
+                    priority: 100
 ```
+
+> **Prerequisite:** your `selectShipping.html.twig` must call `sylius_template_event('sylius.shop.checkout.select_shipping.before_navigation', {'order': order})`. This is present in the default Sylius shop template. If your project overrides this template, add the call manually (see Manual embed below).
 
 ### Manual embed (alternative)
 
-For custom checkout flows that do not use Twig Hooks:
+For custom checkout flows that do not use the default Sylius template event:
 
 ```twig
-{# Show only when the active shipment uses a relay method #}
 {% set relay_codes = relay_method_codes() %}
-{% if active_method_code in relay_codes %}
-    {% include '@KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig' with {
-        searchUrl:       path('keirontw_relay_point_shop_search'),
-        geocodeUrl:      path('keirontw_relay_point_shop_geocode'),
-        selectUrl:       path('keirontw_relay_point_shop_select'),
-        methodCodes:     [active_method_code],
-        cartToken:       cart.tokenValue,
-        addressStreet:   cart.shippingAddress.street,
-        addressCity:     cart.shippingAddress.city,
-        addressPostcode: cart.shippingAddress.postcode,
-        addressCountry:  cart.shippingAddress.countryCode,
-    } %}
-{% endif %}
+{% for shipment in order.shipments %}
+    {% if shipment.method is not null and shipment.method.code in relay_codes %}
+        {% include '@KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig' with {
+            searchUrl:       path('keirontw_relay_point_shop_search'),
+            geocodeUrl:      path('keirontw_relay_point_shop_geocode'),
+            selectUrl:       path('keirontw_relay_point_shop_select'),
+            methodCodes:     [shipment.method.code],
+            cartToken:       order.tokenValue,
+            addressStreet:   order.shippingAddress ? order.shippingAddress.street : '',
+            addressCity:     order.shippingAddress ? order.shippingAddress.city : '',
+            addressPostcode: order.shippingAddress ? order.shippingAddress.postcode : '',
+            addressCountry:  order.shippingAddress ? order.shippingAddress.countryCode : '',
+        } %}
+    {% endif %}
+{% endfor %}
 ```
 
 ### Register the Stimulus controller
@@ -291,43 +275,23 @@ The Stimulus controller dispatches events that bubble to `window`:
 | `relay-point-picker:confirmed` | Customer clicks "Confirm" | `{ point }` |
 | `relay-point-picker:error` | Network or API error | `{ message }` |
 
-When `selectUrl` is provided, the plugin automatically POSTs to the session on confirm. Listen to `relay-point-picker:confirmed` in your Stimulus controller to trigger the next checkout step:
+Listen to `relay-point-picker:confirmed` to trigger the next checkout step:
 
 ```js
-// assets/controllers/checkout_controller.js
-import { Controller } from '@hotwired/stimulus';
-
-export default class extends Controller {
-    connect() {
-        this.element.addEventListener('relay-point-picker:confirmed', this.#onConfirmed.bind(this));
-    }
-
-    #onConfirmed(event) {
-        // Submit the checkout form, redirect, update hidden field…
-        this.element.querySelector('form').submit();
-    }
-}
-```
-
-Handle errors from the widget:
-
-```js
-window.addEventListener('relay-point-picker:error', (event) => {
-    // Display a toast, banner, etc.
-    showToast(event.detail.message);
+this.element.addEventListener('relay-point-picker:confirmed', () => {
+    this.element.querySelector('form').submit();
 });
 ```
 
 ### Order completion — built-in subscriber
 
-When `apply_relay_point_to_order: true` (the default), the plugin registers `RelayPointOrderSubscriber` which:
+When `apply_relay_point_to_order: true` (the default), the plugin registers `RelayPointOrderSubscriber` which listens on `sylius.order.pre_complete` (winzou state machine event) and:
 
-1. Runs on the Sylius order completion event
-2. Reads `RelayPointSessionStorage::get($order->getTokenValue())`
-3. If a relay point is found, updates the shipping address (street, postcode, city, countryCode, company = relay point name)
-4. Clears the session entry
+1. Reads `RelayPointSessionStorageInterface::get($order->getTokenValue())`
+2. If a relay point is found, updates the shipping address (street, postcode, city, countryCode, company = relay point name)
+3. Clears the session entry
 
-No code change is needed. To **disable** it:
+To **disable** it:
 
 ```yaml
 keirontw_sylius_relay_point:
@@ -337,17 +301,18 @@ keirontw_sylius_relay_point:
 To **extend** the behaviour (e.g. store the relay point ID on a custom entity field), disable the built-in subscriber and write your own:
 
 ```php
-use Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSessionStorage;
+use Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointSessionStorageInterface;
+use Sylius\Bundle\ResourceBundle\Event\ResourceControllerEvent;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
 #[AsEventListener(event: 'sylius.order.pre_complete')]
 final class ApplyRelayPointSubscriber
 {
     public function __construct(
-        private readonly RelayPointSessionStorage $storage,
+        private readonly RelayPointSessionStorageInterface $storage,
     ) {}
 
-    public function __invoke(GenericEvent $event): void
+    public function __invoke(ResourceControllerEvent $event): void
     {
         $order = $event->getSubject();
         $point = $this->storage->get($order->getTokenValue());
@@ -377,22 +342,18 @@ final class ApplyRelayPointSubscriber
 
 ### CSS variables (theming — no Twig change needed)
 
-All CSS is scoped to `.relay-picker`. Override the custom properties in your stylesheet:
-
 ```css
 .relay-picker {
-    --relay-primary:        #7c3aed;   /* accent / confirm button */
+    --relay-primary:        #7c3aed;
     --relay-primary-hover:  #6d28d9;
-    --relay-primary-bg:     #f5f3ff;   /* selected-point panel background */
-    --relay-primary-border: #ddd6fe;   /* selected-point panel border */
-    --relay-radius:         0.375rem;  /* border-radius for panels and inputs */
-    --relay-border:         #d1d5db;   /* general border color */
+    --relay-primary-bg:     #f5f3ff;
+    --relay-primary-border: #ddd6fe;
+    --relay-radius:         0.375rem;
+    --relay-border:         #d1d5db;
 }
 ```
 
 ### Twig blocks (structural overrides — via `{% embed %}`)
-
-Use `{% embed %}` to override individual sections without duplicating the whole template:
 
 ```twig
 {% embed '@KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig' with {
@@ -412,56 +373,27 @@ Use `{% embed %}` to override individual sections without duplicating the whole 
 {% endembed %}
 ```
 
-Available blocks:
-
-| Block | Contains |
-|---|---|
-| `relay_styles` | `<style>` tag with CSS variable defaults |
-| `relay_search_bar` | Search input, submit button, sort control |
-| `relay_filter` | Carrier filter (hidden when only one carrier) |
-| `relay_grid` | Two-column map + list layout |
-| `relay_list` | Scrollable relay point list |
-| `relay_map` | Leaflet map container |
-| `relay_selected_summary` | Selected point detail panel |
-| `relay_confirm_button` | Confirm CTA inside the summary panel |
-
-### Full template override
-
-Copy the template to your bundle override path — Symfony will use it automatically:
-
-```
-templates/bundles/KeirontwSyliusRelayPointPlugin/shop/relay_point_picker.html.twig
-```
+Available blocks: `relay_styles`, `relay_search_bar`, `relay_filter`, `relay_grid`, `relay_list`, `relay_map`, `relay_selected_summary`, `relay_confirm_button`.
 
 ---
 
 ## Adding a custom carrier
 
-Implement `RelayPointProviderInterface` and tag the service. No YAML mapping needed — autoconfiguration applies the tag via `_instanceof`.
+Implement `RelayPointProviderInterface` and tag the service:
 
 ```php
 use Keirontw\SyliusRelayPointPlugin\RelayPoint\RelayPointProviderInterface;
-use Keirontw\SyliusRelayPointPlugin\RelayPoint\Model\RelayPoint;
-use Keirontw\SyliusRelayPointPlugin\RelayPoint\Model\RelayPointSearchCriteria;
 
 final class MyCarrierProvider implements RelayPointProviderInterface
 {
-    public function __construct(
-        private readonly string $apiKey,
-        /** @param list<string> $shippingMethodCodes */
-        private readonly array $shippingMethodCodes,
-    ) {}
-
     public function supports(string $shippingMethodCode): bool
     {
-        return in_array($shippingMethodCode, $this->shippingMethodCodes, true);
+        return $shippingMethodCode === 'my_carrier';
     }
 
-    /** @return RelayPoint[] */
     public function search(RelayPointSearchCriteria $criteria): array
     {
-        // Call your carrier's API and map results to RelayPoint DTOs
-        return [];
+        return []; // map your API response to RelayPoint DTOs
     }
 }
 ```
@@ -469,46 +401,7 @@ final class MyCarrierProvider implements RelayPointProviderInterface
 ```yaml
 # config/services.yaml
 App\Shipping\MyCarrierProvider:
-    arguments:
-        $apiKey: '%env(MY_CARRIER_API_KEY)%'
-        $shippingMethodCodes: ['my_carrier_france']
-```
-
-The provider is immediately visible in the registry — no further config needed.
-
----
-
-## Adding a custom geocoding provider
-
-```php
-use Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface;
-use Keirontw\SyliusRelayPointPlugin\Geocoding\Model\GeocodingResult;
-
-final class MyGeocoder implements GeocodingProviderInterface
-{
-    public function geocode(string $query): ?GeocodingResult
-    {
-        // ...
-        return new GeocodingResult(
-            latitude: 48.8,
-            longitude: 2.3,
-            postcode: '75001',
-            city: 'Paris',
-            countryCode: 'FR',
-        );
-    }
-}
-```
-
-```yaml
-# config/packages/keirontw_sylius_relay_point.yaml
-keirontw_sylius_relay_point:
-    geocoding:
-        provider: custom
-
-# config/services.yaml
-Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface:
-    alias: App\Geocoding\MyGeocoder
+    tags: [keirontw_sylius_relay_point.relay_point_provider]
 ```
 
 ---
@@ -516,22 +409,21 @@ Keirontw\SyliusRelayPointPlugin\Geocoding\GeocodingProviderInterface:
 ## Troubleshooting
 
 **Widget does not appear at checkout**
-- Verify that the customer's shipping method code is listed in `shipping_method_codes` for at least one provider.
-- If you use the Twig Hook, confirm that `sylius_twig_hooks` extension is active. Run `bin/console debug:config sylius_twig_hooks` and look for `relay_point_picker` in the hook.
+- Verify the shipping method code is listed in `shipping_method_codes` for at least one enabled provider.
+- If using the automatic injection, confirm your `selectShipping.html.twig` calls `sylius_template_event('sylius.shop.checkout.select_shipping.before_navigation', {'order': order})`.
+- Run `bin/console debug:config sylius_ui` and look for the `relay_point_picker` block under the event.
 - Call `{{ relay_method_codes() }}` in a template to dump all registered codes.
 
-**Geocode returns no result / map is blank**
-- The Addok endpoint (French BAN) only understands French addresses. Switch to Nominatim or Google Maps for non-French addresses.
-- The widget dispatches `relay-point-picker:error` with the error message — attach a listener to surface it in the UI.
+**Geocode returns no result**
+- Addok only covers French addresses. Switch to Nominatim or Google Maps for international addresses.
 
 **Search returns an empty list**
-- Check the credentials for the carrier (log level `error` in the channel `keirontw_relay_point`).
-- Verify the radius (`radius` query param, default 10 000 m) is large enough for the queried area.
-- Confirm the country code matches what the provider supports (e.g. GLS uses two-letter ISO codes in uppercase).
+- Check credentials (log channel `keirontw_relay_point`, level `error`).
+- Verify the country code format matches what the provider expects.
 
 **Relay point not saved to the order**
 - Make sure `apply_relay_point_to_order: true` (default).
-- Confirm `selectUrl` is passed to the widget and that the POST succeeds (check Network tab — expect `{"success":true}`).
+- Confirm `selectUrl` is passed to the widget and the POST returns `{"success":true}`.
 - The subscriber reads the session via cart token: `cartToken` must match `order.tokenValue`.
 
 ---
