@@ -35,23 +35,24 @@ final class RelayPointSearchController extends AbstractController
      */
     public function search(Request $request): JsonResponse
     {
-        $shippingMethodCode = $request->query->get('shipping_method_code');
+        $shippingMethodCode = $request->query->getString('shipping_method_code');
 
-        if (empty($shippingMethodCode)) {
+        if ('' === $shippingMethodCode) {
             return new JsonResponse(['error' => 'Missing parameter: shipping_method_code'], 400);
         }
 
-        $latitude = $request->query->get('latitude');
-        $longitude = $request->query->get('longitude');
+        $latitudeRaw = $request->query->getString('latitude');
+        $longitudeRaw = $request->query->getString('longitude');
+        $radiusRaw = $request->query->getString('radius');
 
         $criteria = new RelayPointSearchCriteria(
-            postcode: $request->query->get('postcode'),
-            city: $request->query->get('city'),
-            countryCode: $request->query->get('country_code', 'FR'),
-            latitude: null !== $latitude ? (float) $latitude : null,
-            longitude: null !== $longitude ? (float) $longitude : null,
-            limit: (int) $request->query->get('limit', 10),
-            radiusInMeters: null !== $request->query->get('radius') ? (int) $request->query->get('radius') : null,
+            postcode: $request->query->getString('postcode') ?: null,
+            city: $request->query->getString('city') ?: null,
+            countryCode: $request->query->getString('country_code') ?: 'FR',
+            latitude: '' !== $latitudeRaw ? (float) $latitudeRaw : null,
+            longitude: '' !== $longitudeRaw ? (float) $longitudeRaw : null,
+            limit: $request->query->getInt('limit', 10),
+            radiusInMeters: '' !== $radiusRaw ? (int) $radiusRaw : null,
         );
 
         $points = $this->searchService->searchByShippingMethod($shippingMethodCode, $criteria);
@@ -85,9 +86,9 @@ final class RelayPointSearchController extends AbstractController
      */
     public function geocode(Request $request): JsonResponse
     {
-        $query = $request->query->get('q');
+        $query = $request->query->getString('q');
 
-        if (empty($query)) {
+        if ('' === $query) {
             return new JsonResponse(['error' => 'Missing parameter: q'], 400);
         }
 

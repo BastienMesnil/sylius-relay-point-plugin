@@ -4,298 +4,237 @@ declare(strict_types=1);
 
 namespace Keirontw\SyliusRelayPointPlugin\DependencyInjection;
 
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 final class Configuration implements ConfigurationInterface
 {
-    /**
-     * @psalm-suppress UnusedVariable
-     */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('keirontw_sylius_relay_point');
         $rootNode = $treeBuilder->getRootNode();
+        \assert($rootNode instanceof ArrayNodeDefinition);
 
-        $rootNode
-            ->children()
-                ->booleanNode('apply_relay_point_to_order')
-                    ->defaultTrue()
-                    ->info('When true (default), the relay point chosen by the customer is automatically copied onto the shipping address when the checkout is completed. Set to false to handle this yourself.')
-                ->end()
-                ->arrayNode('geocoding')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->enumNode('provider')
-                            ->values(['addok', 'nominatim', 'google_maps', 'photon', 'custom'])
-                            ->defaultValue('addok')
-                            ->info('addok: French BAN, free, no key needed (recommended for France). nominatim: self-hosted OSM, international. google_maps: commercial worldwide. photon: self-hosted OSM, lightweight. custom: bring your own GeocodingProviderInterface service alias.')
-                        ->end()
-                        ->arrayNode('addok')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->scalarNode('url')
-                                    ->defaultValue('https://api-adresse.data.gouv.fr/search/')
-                                    ->info('Public French government endpoint (no key needed) or your self-hosted Addok instance.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('nominatim')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->scalarNode('url')
-                                    ->defaultValue('https://nominatim.openstreetmap.org/search')
-                                    ->info('URL of your self-hosted Nominatim instance. The public nominatim.openstreetmap.org forbids SaaS-style usage.')
-                                ->end()
-                                ->scalarNode('secret')->defaultNull()->end()
-                                ->scalarNode('user_agent')->defaultValue('SyliusRelayPointPlugin')->end()
-                                ->scalarNode('contact_email')->defaultNull()->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('google_maps')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->scalarNode('api_key')
-                                    ->defaultNull()
-                                    ->info('Google Maps Geocoding API key. Required when provider is set to google_maps.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('photon')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->scalarNode('url')
-                                    ->defaultNull()
-                                    ->info('URL of your self-hosted Photon instance. Required when provider is set to photon.')
-                                ->end()
-                                ->scalarNode('lang')->defaultNull()->end()
-                            ->end()
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('providers')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->arrayNode('mondial_relay')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('account')
-                                    ->isRequired()
-                                    ->info('Mondial Relay Enseigne code.')
-                                ->end()
-                                ->scalarNode('password')
-                                    ->isRequired()
-                                    ->info('Mondial Relay private key.')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to this provider.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('chronopost')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('account')
-                                    ->isRequired()
-                                    ->info('Chronopost account number (CHRONOPOST_ACCOUNT).')
-                                ->end()
-                                ->scalarNode('password')
-                                    ->isRequired()
-                                    ->info('Chronopost password (CHRONOPOST_PASSWORD).')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to Chronopost (e.g. pickup_france, pickup_germany).')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('shop2shop')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('account')
-                                    ->isRequired()
-                                    ->info('Shop2Shop account number. Shop2Shop uses the same Chronopost SOAP API but with separate credentials.')
-                                ->end()
-                                ->scalarNode('password')
-                                    ->isRequired()
-                                    ->info('Shop2Shop password.')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to Shop2Shop.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('colissimo')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('account_number')
-                                    ->isRequired()
-                                    ->info('Colissimo account number (provided by La Poste).')
-                                ->end()
-                                ->scalarNode('password')
-                                    ->isRequired()
-                                    ->info('Colissimo password.')
-                                ->end()
-                                ->enumNode('filter_relay')
-                                    ->values(['A', 'P', 'C'])
-                                    ->defaultValue('A')
-                                    ->info('A=all, P=relay points only, C=lockers (consignes) only.')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to Colissimo.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('inpost')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('base_url')
-                                    ->isRequired()
-                                    ->info('InPost REST API base URL for your country. France: https://api.inpost.fr/v1/points  Poland: https://api-pl-points.easypack24.net/v1/points  UK: https://api.inpost.co.uk/v1/points')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to InPost.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('colis_prive')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('login')
-                                    ->isRequired()
-                                    ->info('Colis Privé login (same credentials as the label generation SOAP).')
-                                ->end()
-                                ->scalarNode('password')
-                                    ->isRequired()
-                                    ->info('Colis Privé password.')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to Colis Privé relay points.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('dpd')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('api_key')
-                                    ->isRequired()
-                                    ->info('DPD API key — request at https://developer.dpd.com. One key covers all EU countries.')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to DPD Pickup.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('dhl')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('api_key')
-                                    ->isRequired()
-                                    ->info('DHL API key — free, register at https://developer.dhl.com.')
-                                ->end()
-                                ->enumNode('service_type')
-                                    ->values(['parcel:pick-up', 'parcel:drop-off-easy'])
-                                    ->defaultValue('parcel:pick-up')
-                                    ->info('parcel:pick-up for ServicePoints, parcel:drop-off-easy for Packstations.')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to DHL ServicePoint.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('packeta')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('api_key')
-                                    ->isRequired()
-                                    ->info('Packeta (Zásilkovna) API key — request at https://client.packeta.com. Covers CZ, SK, PL, HU, RO, DE, AT, FR and more.')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to Packeta.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('post_nl')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('api_key')
-                                    ->isRequired()
-                                    ->info('PostNL API key — request at https://developer.postnl.nl (business account required).')
-                                ->end()
-                                ->enumNode('delivery_options')
-                                    ->values(['PG', 'PA', 'PG_EX'])
-                                    ->defaultValue('PG')
-                                    ->info('PG=retail points + lockers, PA=lockers only, PG_EX=retail points only (no lockers).')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to PostNL pickup points.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('bpost')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('api_key')
-                                    ->isRequired()
-                                    ->info('bpost API key (provided by bpost upon business agreement — see https://www.bpost.be/en/business).')
-                                ->end()
-                                ->scalarNode('base_url')
-                                    ->isRequired()
-                                    ->info('bpost parcel points API base URL (provided by bpost — no public endpoint exists).')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to bpost parcel points.')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('gls')
-                            ->canBeEnabled()
-                            ->children()
-                                ->scalarNode('username')
-                                    ->isRequired()
-                                    ->info('GLS ShipIT REST API username (provided by your GLS contact).')
-                                ->end()
-                                ->scalarNode('password')
-                                    ->isRequired()
-                                    ->info('GLS ShipIT REST API password.')
-                                ->end()
-                                ->scalarNode('base_url')
-                                    ->defaultValue('https://shipit.gls-group.eu/backend/rs/parcelshop')
-                                    ->info('GLS ShipIT ParcelShop API base URL. May differ per country — check with your GLS contact.')
-                                ->end()
-                                ->arrayNode('shipping_method_codes')
-                                    ->scalarPrototype()->end()
-                                    ->defaultValue([])
-                                    ->info('Sylius shipping method codes routed to GLS ParcelShop.')
-                                ->end()
-                            ->end()
-                        ->end()
-                    ->end()
-                ->end()
-            ->end()
+        $rootNode->children()
+            ->booleanNode('apply_relay_point_to_order')->defaultTrue()
         ;
 
+        $rootNode->append($this->buildGeocodingNode());
+        $rootNode->append($this->buildProvidersNode());
+
         return $treeBuilder;
+    }
+
+    private function buildGeocodingNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('geocoding');
+        $node->addDefaultsIfNotSet();
+
+        $node->children()
+            ->enumNode('provider')
+                ->values(['addok', 'nominatim', 'google_maps', 'photon', 'custom'])
+                ->defaultValue('addok')
+        ;
+
+        $addok = new ArrayNodeDefinition('addok');
+        $addok->addDefaultsIfNotSet();
+        $addok->children()->scalarNode('url')->defaultValue('https://api-adresse.data.gouv.fr/search/');
+        $node->append($addok);
+
+        $nominatim = new ArrayNodeDefinition('nominatim');
+        $nominatim->addDefaultsIfNotSet();
+        $nominatim->children()->scalarNode('url')->defaultValue('https://nominatim.openstreetmap.org/search');
+        $nominatim->children()->scalarNode('secret')->defaultNull();
+        $nominatim->children()->scalarNode('user_agent')->defaultValue('SyliusRelayPointPlugin');
+        $nominatim->children()->scalarNode('contact_email')->defaultNull();
+        $node->append($nominatim);
+
+        $googleMaps = new ArrayNodeDefinition('google_maps');
+        $googleMaps->addDefaultsIfNotSet();
+        $googleMaps->children()->scalarNode('api_key')->defaultNull();
+        $node->append($googleMaps);
+
+        $photon = new ArrayNodeDefinition('photon');
+        $photon->addDefaultsIfNotSet();
+        $photon->children()->scalarNode('url')->defaultNull();
+        $photon->children()->scalarNode('lang')->defaultNull();
+        $node->append($photon);
+
+        return $node;
+    }
+
+    private function buildProvidersNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('providers');
+        $node->addDefaultsIfNotSet();
+
+        foreach ($this->carrierNodes() as $carrierNode) {
+            $node->append($carrierNode);
+        }
+
+        return $node;
+    }
+
+    /** @return ArrayNodeDefinition[] */
+    private function carrierNodes(): array
+    {
+        return [
+            $this->buildMondialRelayNode(),
+            $this->buildChronopostNode(),
+            $this->buildShop2ShopNode(),
+            $this->buildColissimoNode(),
+            $this->buildInPostNode(),
+            $this->buildColisPriveNode(),
+            $this->buildDpdNode(),
+            $this->buildDhlNode(),
+            $this->buildPacketaNode(),
+            $this->buildPostNlNode(),
+            $this->buildBpostNode(),
+            $this->buildGlsNode(),
+        ];
+    }
+
+    private function addShippingMethodCodes(ArrayNodeDefinition $node): void
+    {
+        $codesNode = $node->children()->arrayNode('shipping_method_codes');
+        $codesNode->scalarPrototype();
+        $codesNode->defaultValue([]);
+    }
+
+    private function buildMondialRelayNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('mondial_relay');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('account')->isRequired();
+        $node->children()->scalarNode('password')->isRequired();
+        $this->addShippingMethodCodes($node);
+
+        return $node;
+    }
+
+    private function buildChronopostNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('chronopost');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('account')->isRequired();
+        $node->children()->scalarNode('password')->isRequired();
+        $this->addShippingMethodCodes($node);
+
+        return $node;
+    }
+
+    private function buildShop2ShopNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('shop2shop');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('account')->isRequired();
+        $node->children()->scalarNode('password')->isRequired();
+        $this->addShippingMethodCodes($node);
+
+        return $node;
+    }
+
+    private function buildColissimoNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('colissimo');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('account_number')->isRequired();
+        $node->children()->scalarNode('password')->isRequired();
+        $node->children()->enumNode('filter_relay')->values(['A', 'P', 'C'])->defaultValue('A');
+        $this->addShippingMethodCodes($node);
+
+        return $node;
+    }
+
+    private function buildInPostNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('inpost');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('base_url')->isRequired();
+        $this->addShippingMethodCodes($node);
+
+        return $node;
+    }
+
+    private function buildColisPriveNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('colis_prive');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('login')->isRequired();
+        $node->children()->scalarNode('password')->isRequired();
+        $this->addShippingMethodCodes($node);
+
+        return $node;
+    }
+
+    private function buildDpdNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('dpd');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('api_key')->isRequired();
+        $this->addShippingMethodCodes($node);
+
+        return $node;
+    }
+
+    private function buildDhlNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('dhl');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('api_key')->isRequired();
+        $node->children()->enumNode('service_type')
+            ->values(['parcel:pick-up', 'parcel:drop-off-easy'])
+            ->defaultValue('parcel:pick-up')
+        ;
+        $this->addShippingMethodCodes($node);
+
+        return $node;
+    }
+
+    private function buildPacketaNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('packeta');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('api_key')->isRequired();
+        $this->addShippingMethodCodes($node);
+
+        return $node;
+    }
+
+    private function buildPostNlNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('post_nl');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('api_key')->isRequired();
+        $node->children()->enumNode('delivery_options')->values(['PG', 'PA', 'PG_EX'])->defaultValue('PG');
+        $this->addShippingMethodCodes($node);
+
+        return $node;
+    }
+
+    private function buildBpostNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('bpost');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('api_key')->isRequired();
+        $node->children()->scalarNode('base_url')->isRequired();
+        $this->addShippingMethodCodes($node);
+
+        return $node;
+    }
+
+    private function buildGlsNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('gls');
+        $node->canBeEnabled();
+        $node->children()->scalarNode('username')->isRequired();
+        $node->children()->scalarNode('password')->isRequired();
+        $node->children()->scalarNode('base_url')
+            ->defaultValue('https://shipit.gls-group.eu/backend/rs/parcelshop')
+        ;
+        $this->addShippingMethodCodes($node);
+
+        return $node;
     }
 }
