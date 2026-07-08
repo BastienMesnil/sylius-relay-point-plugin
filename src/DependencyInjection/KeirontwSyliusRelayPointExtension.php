@@ -39,6 +39,8 @@ final class KeirontwSyliusRelayPointExtension extends AbstractResourceExtension 
         \assert($configuration !== null);
         $config = $this->processConfiguration($configuration, $configs);
 
+        $container->setParameter('keirontw_sylius_relay_point.ui.theme', $config['ui']['theme']);
+
         $geocoding = $config['geocoding'];
 
         $container->setParameter('keirontw_sylius_relay_point.geocoding.addok.url', $geocoding['addok']['url']);

@@ -71,6 +71,14 @@ Create `config/packages/keirontw_sylius_relay_point.yaml`:
 ```yaml
 keirontw_sylius_relay_point:
 
+    # ── Widget UI ────────────────────────────────────────────────────────────
+    # CSS framework used to render the relay point picker widget.
+    #   tailwind  — default, matches the Sylius Shop theme shipped since 2.0
+    #   bootstrap — pick this if your shop theme is still on Bootstrap 4/5
+    # See "Customising the widget → CSS framework" below for details.
+    ui:
+        theme: tailwind
+
     # ── Geocoding ─────────────────────────────────────────────────────────────
     geocoding:
         # addok        — French BAN (free, no key, best for France) — default
@@ -374,6 +382,21 @@ final class ApplyRelayPointSubscriber
 ---
 
 ## Customising the widget
+
+### CSS framework (Tailwind or Bootstrap)
+
+The widget ships with a Tailwind-based layout by default, but the classes are not hardcoded in the template: every element resolves its class list through the `relay_ui_class()` Twig function, backed by `Keirontw\SyliusRelayPointPlugin\Ui\RelayPointUiClasses`. If your Sylius shop theme is still on Bootstrap, switch the theme in config — no template change needed:
+
+```yaml
+# config/packages/keirontw_sylius_relay_point.yaml
+keirontw_sylius_relay_point:
+    ui:
+        theme: bootstrap   # tailwind (default) | bootstrap
+```
+
+This also covers the HTML the widget generates client-side (list items, the Leaflet popup, the carrier filter, opening hours). The Stimulus controller receives the active theme via `data-relay-point-picker-theme-value` and resolves the same semantic keys against its own `UI_CLASSES` map (`assets/shop/controllers/relay-point-picker_controller.js`) — the two class maps are kept manually in sync, so if you add a new element to the template, mirror the key in both `RelayPointUiClasses` and `UI_CLASSES`.
+
+CSS variables (below) remain the recommended way to adjust colors/radius on either theme — you don't need to touch the class maps for a simple palette change.
 
 ### CSS variables (theming — no Twig change needed)
 

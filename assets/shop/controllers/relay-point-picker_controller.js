@@ -47,6 +47,7 @@ export default class extends Controller {
         addressPostcode: String,
         addressCountry: String,
         sortBy: { type: String, default: 'distance' },
+        theme: { type: String, default: 'tailwind' },
     };
 
     // Carrier color palette — index is assigned per unique carrierCode
@@ -57,6 +58,72 @@ export default class extends Controller {
         { bg: '#2563EB26', text: '#2563EB' },
         { bg: '#16A34A26', text: '#16A34A' },
     ];
+
+    // Classes for HTML this controller generates at runtime — mirrors the key set in
+    // Keirontw\SyliusRelayPointPlugin\Ui\RelayPointUiClasses (server-rendered markup).
+    // Keep both in sync when adding a new themed element.
+    static UI_CLASSES = {
+        tailwind: {
+            filter_option_row: 'flex items-center gap-2 py-1.5',
+            filter_radio: 'form-radio h-4 w-4',
+            filter_option_text: 'text-sm',
+            filter_all_text: 'text-sm font-medium',
+            list_empty: 'p-6 text-center text-sm text-gray-500 italic',
+            list_item: 'group p-3 border-b border-gray-100 transition-all',
+            list_item_selected: 'bg-blue-50 border-l-2 border-l-blue-500',
+            list_item_row: 'flex justify-between items-start gap-2',
+            list_item_main: 'flex-1 min-w-0',
+            list_item_name: 'block text-xs text-gray-900 truncate',
+            list_item_address: 'block text-[10px] text-gray-500 truncate',
+            list_item_distance: 'text-[9px] text-gray-400',
+            list_item_badge: 'flex-shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded whitespace-nowrap',
+            hours_toggle: 'text-[10px] text-blue-600 hover:underline flex items-center gap-1 mt-0.5',
+            hours_arrow: 'w-3 h-3 transition-transform',
+            hours_content: 'mt-1.5 text-[10px] text-gray-500 space-y-0.5 border-t border-gray-100 pt-1.5',
+            hours_row: 'flex justify-between gap-4',
+            hours_day: 'font-medium',
+            popup_wrapper: 'min-w-[180px] p-2',
+            popup_name: 'block text-gray-900 text-sm',
+            popup_line: 'block text-xs text-gray-500',
+            popup_distance: 'block text-xs text-gray-400 mt-1',
+            popup_badge: 'inline-block mt-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded',
+            popup_button: 'mt-3 w-full text-xs font-semibold py-1.5 rounded-full text-white',
+            summary_hours_row: 'flex justify-between text-xs py-0.5 border-b border-gray-50 last:border-0',
+            summary_hours_day: 'font-medium text-gray-500',
+            summary_hours_value: 'text-gray-900',
+            summary_hours_empty: 'text-xs text-gray-400 italic',
+        },
+        bootstrap: {
+            filter_option_row: 'd-flex align-items-center gap-2 py-1',
+            filter_radio: 'form-check-input',
+            filter_option_text: 'small',
+            filter_all_text: 'small fw-medium',
+            list_empty: 'p-4 text-center text-muted fst-italic',
+            list_item: 'p-3 border-bottom',
+            list_item_selected: 'bg-primary-subtle border-start border-primary border-2',
+            list_item_row: 'd-flex justify-content-between align-items-start gap-2',
+            list_item_main: 'flex-grow-1 text-truncate',
+            list_item_name: 'd-block small text-truncate',
+            list_item_address: 'd-block small text-muted text-truncate',
+            list_item_distance: 'small text-muted',
+            list_item_badge: 'flex-shrink-0 badge text-uppercase text-wrap',
+            hours_toggle: 'btn btn-link btn-sm p-0 d-inline-flex align-items-center gap-1',
+            hours_arrow: '',
+            hours_content: 'mt-2 small text-muted border-top pt-2',
+            hours_row: 'd-flex justify-content-between gap-3',
+            hours_day: 'fw-medium',
+            popup_wrapper: 'p-2',
+            popup_name: 'd-block fw-semibold small',
+            popup_line: 'd-block small text-muted',
+            popup_distance: 'd-block small text-muted mt-1',
+            popup_badge: 'badge text-uppercase mt-1',
+            popup_button: 'btn btn-primary btn-sm w-100 mt-2 rounded-pill',
+            summary_hours_row: 'd-flex justify-content-between small py-1 border-bottom',
+            summary_hours_day: 'fw-medium text-muted',
+            summary_hours_value: '',
+            summary_hours_empty: 'small text-muted fst-italic',
+        },
+    };
 
     connect() {
         this.map = null;
@@ -391,21 +458,21 @@ export default class extends Controller {
         list.innerHTML = codes.map(code => {
             const color = this.carrierColorMap[code];
             return `
-            <label class="flex items-center gap-2 py-1.5 cursor-pointer">
+            <label class="${this._cls('filter_option_row')}" style="cursor: pointer;">
                 <input type="radio" name="relay_carrier_filter" value="${code}"
                     data-action="change->relay-point-picker#handleCarrierFilter"
-                    class="form-radio h-4 w-4" style="accent-color: ${color.text}">
-                <span class="text-sm" style="color: ${color.text}">${code.replace(/_/g, ' ')}</span>
+                    class="${this._cls('filter_radio')}" style="accent-color: ${color.text}">
+                <span class="${this._cls('filter_option_text')}" style="color: ${color.text}">${code.replace(/_/g, ' ')}</span>
             </label>`;
         }).join('');
 
         // "All" option
         list.insertAdjacentHTML('afterbegin', `
-            <label class="flex items-center gap-2 py-1.5 cursor-pointer">
+            <label class="${this._cls('filter_option_row')}" style="cursor: pointer;">
                 <input type="radio" name="relay_carrier_filter" value="all" checked
                     data-action="change->relay-point-picker#handleCarrierFilter"
-                    class="form-radio h-4 w-4">
-                <span class="text-sm font-medium">Tous les transporteurs</span>
+                    class="${this._cls('filter_radio')}">
+                <span class="${this._cls('filter_all_text')}">Tous les transporteurs</span>
             </label>`);
     }
 
@@ -478,7 +545,7 @@ export default class extends Controller {
 
         if (!pts.length && this.hasListTarget) {
             this.listTarget.innerHTML =
-                '<p class="p-6 text-center text-sm text-gray-500 italic">Aucun point relais trouvé.</p>';
+                `<p class="${this._cls('list_empty')}">Aucun point relais trouvé.</p>`;
         }
     }
 
@@ -487,15 +554,15 @@ export default class extends Controller {
             ? `${(point.distanceInMeters / 1000).toFixed(1)} km`
             : '';
         return `
-            <div class="min-w-[180px] p-2">
-                <strong class="block text-gray-900 text-sm">${point.name}</strong>
-                <span class="block text-xs text-gray-500">${point.street}</span>
-                <span class="block text-xs text-gray-500">${point.postcode} ${point.city}</span>
-                ${dist ? `<span class="block text-xs text-gray-400 mt-1">${dist}</span>` : ''}
-                <span class="inline-block mt-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded"
+            <div class="${this._cls('popup_wrapper')}">
+                <strong class="${this._cls('popup_name')}">${point.name}</strong>
+                <span class="${this._cls('popup_line')}">${point.street}</span>
+                <span class="${this._cls('popup_line')}">${point.postcode} ${point.city}</span>
+                ${dist ? `<span class="${this._cls('popup_distance')}">${dist}</span>` : ''}
+                <span class="${this._cls('popup_badge')}"
                     style="background:${color.bg};color:${color.text}">${point.carrierCode.replace(/_/g, ' ')}</span>
                 <button type="button"
-                    class="mt-3 w-full text-xs font-semibold py-1.5 rounded-full text-white"
+                    class="${this._cls('popup_button')}"
                     style="background:${color.text}"
                     data-action="click->relay-point-picker#selectPoint"
                     data-point-key="${key}">
@@ -513,16 +580,16 @@ export default class extends Controller {
         const hoursHtml = point.openingHours?.length
             ? `<div data-hours-root>
                 <button type="button" data-action="click->relay-point-picker#toggleHours"
-                    class="text-[10px] text-blue-600 hover:underline flex items-center gap-1 mt-0.5">
+                    class="${this._cls('hours_toggle')}">
                     <span data-hours-label>Voir les horaires</span>
-                    <svg data-hours-arrow class="w-3 h-3 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg data-hours-arrow class="${this._cls('hours_arrow')}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
-                <div data-hours-content class="hidden mt-1.5 text-[10px] text-gray-500 space-y-0.5 border-t border-gray-100 pt-1.5">
+                <div data-hours-content class="hidden ${this._cls('hours_content')}">
                     ${point.openingHours.map(oh =>
-                        `<div class="flex justify-between gap-4">
-                            <span class="font-medium">${oh.day}</span>
+                        `<div class="${this._cls('hours_row')}">
+                            <span class="${this._cls('hours_day')}">${oh.day}</span>
                             <span>${oh.hours}</span>
                         </div>`
                     ).join('')}
@@ -532,22 +599,21 @@ export default class extends Controller {
 
         const item = document.createElement('div');
         item.className = [
-            'group p-3 cursor-pointer border-b border-gray-100 transition-all',
-            'hover:bg-gray-50',
-            isSelected ? 'bg-blue-50 border-l-2 border-l-blue-500' : '',
+            this._cls('list_item'),
+            isSelected ? this._cls('list_item_selected') : '',
         ].join(' ');
         item.dataset.pointKey = key;
         item.dataset.action = 'click->relay-point-picker#selectPoint';
 
         item.innerHTML = `
-            <div class="flex justify-between items-start gap-2">
-                <div class="flex-1 min-w-0">
-                    <strong class="block text-xs text-gray-900 truncate">${point.name}</strong>
-                    <span class="block text-[10px] text-gray-500 truncate">${point.street}, ${point.postcode} ${point.city}</span>
-                    ${dist ? `<span class="text-[9px] text-gray-400">${dist}</span>` : ''}
+            <div class="${this._cls('list_item_row')}">
+                <div class="${this._cls('list_item_main')}">
+                    <strong class="${this._cls('list_item_name')}">${point.name}</strong>
+                    <span class="${this._cls('list_item_address')}">${point.street}, ${point.postcode} ${point.city}</span>
+                    ${dist ? `<span class="${this._cls('list_item_distance')}">${dist}</span>` : ''}
                     ${hoursHtml}
                 </div>
-                <span class="flex-shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded whitespace-nowrap"
+                <span class="${this._cls('list_item_badge')}"
                     style="background:${color.bg};color:${color.text}">
                     ${point.carrierCode.replace(/_/g, ' ')}
                 </span>
@@ -561,10 +627,10 @@ export default class extends Controller {
         this.selectedPointKey = key;
 
         // Highlight list
+        const selectedClasses = this._cls('list_item_selected').split(' ').filter(Boolean);
         this.listTarget?.querySelectorAll('[data-point-key]').forEach(el => {
-            el.classList.toggle('bg-blue-50', el.dataset.pointKey === key);
-            el.classList.toggle('border-l-2', el.dataset.pointKey === key);
-            el.classList.toggle('border-l-blue-500', el.dataset.pointKey === key);
+            const isMatch = el.dataset.pointKey === key;
+            selectedClasses.forEach(c => el.classList.toggle(c, isMatch));
         });
 
         // Center map
@@ -606,12 +672,12 @@ export default class extends Controller {
         if (this.hasOpeningHoursContainerTarget) {
             this.openingHoursContainerTarget.innerHTML = point.openingHours?.length
                 ? point.openingHours.map(oh =>
-                    `<div class="flex justify-between text-xs py-0.5 border-b border-gray-50 last:border-0">
-                        <span class="font-medium text-gray-500">${oh.day}</span>
-                        <span class="text-gray-900">${oh.hours}</span>
+                    `<div class="${this._cls('summary_hours_row')}">
+                        <span class="${this._cls('summary_hours_day')}">${oh.day}</span>
+                        <span class="${this._cls('summary_hours_value')}">${oh.hours}</span>
                     </div>`
                   ).join('')
-                : '<p class="text-xs text-gray-400 italic">Horaires non disponibles</p>';
+                : `<p class="${this._cls('summary_hours_empty')}">Horaires non disponibles</p>`;
         }
 
         this.selectedPointInfoTarget.classList.remove('hidden');
@@ -626,6 +692,11 @@ export default class extends Controller {
 
     _key(point) {
         return `${point.id}__${point.carrierCode}`;
+    }
+
+    _cls(key) {
+        const theme = this.constructor.UI_CLASSES[this.themeValue] ? this.themeValue : 'tailwind';
+        return this.constructor.UI_CLASSES[theme][key] ?? '';
     }
 
     _haversine(lat1, lon1, lat2, lon2) {
