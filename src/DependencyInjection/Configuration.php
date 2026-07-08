@@ -20,10 +20,25 @@ final class Configuration implements ConfigurationInterface
             ->booleanNode('apply_relay_point_to_order')->defaultTrue()
         ;
 
+        $rootNode->append($this->buildUiNode());
         $rootNode->append($this->buildGeocodingNode());
         $rootNode->append($this->buildProvidersNode());
 
         return $treeBuilder;
+    }
+
+    private function buildUiNode(): ArrayNodeDefinition
+    {
+        $node = new ArrayNodeDefinition('ui');
+        $node->addDefaultsIfNotSet();
+
+        $node->children()
+            ->enumNode('theme')
+                ->values(['tailwind', 'bootstrap'])
+                ->defaultValue('tailwind')
+        ;
+
+        return $node;
     }
 
     private function buildGeocodingNode(): ArrayNodeDefinition
