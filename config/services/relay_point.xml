@@ -32,8 +32,13 @@
             <tag name="controller.service_arguments" />
         </service>
 
+        <service id="Keirontw\SyliusRelayPointPlugin\Ui\RelayPointUiClasses">
+            <argument>%keirontw_sylius_relay_point.ui.theme%</argument>
+        </service>
+
         <service id="Keirontw\SyliusRelayPointPlugin\Twig\RelayPointExtension">
             <argument>%keirontw_sylius_relay_point.relay_method_codes%</argument>
+            <argument type="service" id="Keirontw\SyliusRelayPointPlugin\Ui\RelayPointUiClasses" />
             <tag name="twig.extension" />
         </service>
 
